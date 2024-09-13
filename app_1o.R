@@ -1,22 +1,24 @@
-# Load necessary libraries
 library(shiny)
 library(shinythemes)
 library(ggplot2)
-library(plotly)       # For interactive plots
+library(plotly)
 library(DT)
-library(haven)        # For data import and handling labelled data
-library(dplyr)        # For data manipulation
-library(reshape2)     # For data reshaping
-library(rcompanion)   # For statistical tests on ordinal data
-library(MASS)         # For ordinal logistic regression
-library(readxl)       # For reading Excel files
+library(haven)
+library(dplyr)
+library(rcompanion)
+library(MASS)
+library(readxl)
+library(RColorBrewer)
+library(viridis)
+library(shinyWidgets)
+library(bslib)
 
-# Increase the maximum request size to 50 MB (adjust as needed)
-options(shiny.maxRequestSize = 50 * 1024^2)
+# Increase the maximum request size to 50 MB
+options(shiny.maxRequestSize = 50*1024^2)
 
 # Define UI
 ui <- fluidPage(
-  theme = shinytheme("flatly"),  # Changed to a modern and sleek theme
+  theme = bs_theme(bootswatch = "lux"),
   tags$head(
     tags$style(HTML("
       /* Custom CSS to enhance the appearance */
@@ -33,39 +35,60 @@ ui <- fluidPage(
       .tab-content {
         padding-top: 20px;
       }
+      /* Style adjustments for inputs within tabs */
+      .tab-pane .form-group {
+        margin-bottom: 15px;
+      }
+      /* Improve dropdown appearance */
+      .selectize-input, .selectize-dropdown {
+        font-size: 14px;
+      }
     "))
   ),
   titlePanel("Advanced Survey Analysis App with Audit Trail"),
   sidebarLayout(
     sidebarPanel(
       fileInput('datafile', 'Upload Survey Data',
-                accept = c('.csv', '.xlsx', '.sav')),
+                accept = c('.csv', '.xlsx', '.sav'),
+                buttonLabel = "Browse...",
+                placeholder = "No file selected"),
       tags$hr(),
       uiOutput("global_options_ui"),
-      width = 3  # Adjusted width for better layout
+      width = 3
     ),
     mainPanel(
       tabsetPanel(
         tabPanel("Data Preview", 
                  DTOutput("data_preview")),
         tabPanel("Descriptive Statistics", 
-                 uiOutput("desc_stats_ui"),
+                 fluidRow(
+                   column(12, uiOutput("desc_stats_ui"))
+                 ),
                  DTOutput("descriptive_table")),
         tabPanel("Visualizations", 
-                 uiOutput("visualization_ui"),
-                 plotlyOutput("plot_output", height = "600px")),
+                 fluidRow(
+                   column(12, uiOutput("visualization_ui"))
+                 ),
+                 plotlyOutput("plot_output", height = "700px"),
+                 tags$br(),
+                 downloadButton("download_plot", "Download Plot", class = "btn btn-success"),
+                 downloadButton("download_plot_data", "Download Plot Data", class = "btn btn-info")),
         tabPanel("Statistical Tests", 
-                 uiOutput("stat_tests_ui"),
+                 fluidRow(
+                   column(12, uiOutput("stat_tests_ui"))
+                 ),
                  verbatimTextOutput("stat_tests_output")),
         tabPanel("Regression Models", 
-                 uiOutput("regression_ui"),
+                 fluidRow(
+                   column(12, uiOutput("regression_ui"))
+                 ),
                  verbatimTextOutput("regression_output")),
         tabPanel("Audit Trail", 
                  verbatimTextOutput("audit_trail"),
                  downloadButton("download_code", "Download R Script")),
         tabPanel("Report", downloadButton("download_report", "Download Report"))
       ),
-      width = 9  # Adjusted width for better layout
+      width = 9
     )
   )
 )
@@ -106,7 +129,13 @@ server <- function(input, output, session) {
   output$global_options_ui <- renderUI({
     req(survey_data())
     tagList(
-      checkboxInput("show_labels", "Show Variable Labels (if available)", FALSE)
+      prettyCheckbox(
+        inputId = "show_labels",
+        label = "Show Variable Labels (if available)",
+        status = "info",
+        shape = "round",
+        animation = "pulse"
+      )
     )
   })
   
@@ -122,7 +151,13 @@ server <- function(input, output, session) {
   output$desc_stats_ui <- renderUI({
     req(survey_data())
     tagList(
-      selectInput("desc_vars", "Select Variables", choices = names(survey_data()), multiple = TRUE)
+      pickerInput(
+        inputId = "desc_vars",
+        label = "Select Variables",
+        choices = names(survey_data()),
+        options = list(`actions-box` = TRUE),
+        multiple = TRUE
+      )
     )
   })
   
@@ -138,7 +173,7 @@ server <- function(input, output, session) {
     for (var in input$desc_vars) {
       var_data <- data[[var]]
       if (is.numeric(var_data)) {
-        # Numeric variable: show mean, median, SD, etc.
+        # Numeric variable: show mean, median, SD, variance, and range
         desc <- data.frame(
           Statistic = c("Mean", "Median", "Standard Deviation", "Variance", "Range"),
           Value = c(
@@ -186,14 +221,56 @@ server <- function(input, output, session) {
   output$visualization_ui <- renderUI({
     req(survey_data())
     tagList(
-      selectInput("plot_type", "Select Plot Type",
-                  choices = c("Histogram", "Bar Chart", "Box Plot", "Scatter Plot", "Line Plot")),
-      selectInput("x_var", "X-axis Variable", choices = names(survey_data())),
-      selectInput("y_var", "Y-axis Variable (for Scatter, Line, Box plots)", 
-                  choices = c(None = '', names(survey_data())), selected = ''),
-      selectInput("color_var", "Color By (Optional)", choices = c(None = '', names(survey_data()))),
-      selectInput("facet_var", "Facet By (Optional)", choices = c(None = '', names(survey_data()))),
-      checkboxInput("apply_filter", "Filter Data", FALSE),
+      fluidRow(
+        column(4,
+               selectInput("plot_type", "Select Plot Type",
+                           choices = c("Histogram", "Bar Chart", "Box Plot", "Scatter Plot", "Line Plot"))
+        ),
+        column(4,
+               selectInput("x_var", "X-axis Variable", choices = names(survey_data()))
+        ),
+        column(4,
+               selectInput("y_var", "Y-axis Variable (for Scatter, Line, Box plots)", 
+                           choices = c(None = '', names(survey_data())), selected = '')
+        )
+      ),
+      fluidRow(
+        column(4,
+               selectInput("color_var", "Color By (Optional)", choices = c(None = '', names(survey_data())))
+        ),
+        column(4,
+               selectInput("facet_var", "Facet By (Optional)", choices = c(None = '', names(survey_data())))
+        ),
+        column(4,
+               selectInput("weight_var", "Weight Variable (Optional)", choices = c(None = '', names(survey_data())))
+        )
+      ),
+      fluidRow(
+        column(4,
+               prettyCheckbox(
+                 inputId = "facet_slider",
+                 label = "Enable Facet Slider View",
+                 status = "primary",
+                 shape = "round",
+                 animation = "pulse"
+               )
+        ),
+        column(4,
+               conditionalPanel(
+                 condition = "input.facet_slider == true && input.facet_var != ''",
+                 uiOutput("facet_level_ui")
+               )
+        ),
+        column(4,
+               prettyCheckbox(
+                 inputId = "apply_filter",
+                 label = "Filter Data",
+                 status = "primary",
+                 shape = "round",
+                 animation = "pulse"
+               )
+        )
+      ),
       conditionalPanel(
         condition = "input.apply_filter == true",
         textInput("filter_condition", "Filter Condition (e.g., age > 30)")
@@ -201,7 +278,27 @@ server <- function(input, output, session) {
     )
   })
   
+  # Facet Level UI for slider view
+  output$facet_level_ui <- renderUI({
+    req(input$facet_var)
+    data <- survey_data()
+    facet_levels <- unique(data[[input$facet_var]])
+    pickerInput(
+      inputId = "facet_level",
+      label = "Select Facet Level",
+      choices = facet_levels,
+      options = list(`live-search` = TRUE)
+    )
+  })
+  
   # Visualization Output
+  plot_obj <- reactiveVal(NULL)  # To store the plot object for downloading
+  plot_data_reactive <- reactiveVal(NULL)  # To store the plot data for downloading
+  
+  # Visualization Output
+  plot_obj <- reactiveVal(NULL)  # To store the plot object for downloading
+  plot_data_reactive <- reactiveVal(NULL)  # To store the plot data for downloading
+  
   output$plot_output <- renderPlotly({
     req(input$plot_type, input$x_var)
     data <- survey_data()
@@ -216,42 +313,137 @@ server <- function(input, output, session) {
       })
     }
     
-    p <- ggplot(data, aes_string(x = input$x_var))
+    # Handle weight variable
+    weight_var <- if (input$weight_var != '') input$weight_var else NULL
     
-    if (input$color_var != '') {
-      p <- p + aes_string(color = input$color_var)
+    # Prepare the data for plotting
+    plot_data <- data
+    
+    # For bar charts, compute counts and percentages
+    if (input$plot_type == "Bar Chart") {
+      group_vars <- input$x_var
+      if (input$color_var != '') {
+        group_vars <- c(group_vars, input$color_var)
+      }
+      if (input$facet_var != '') {
+        group_vars <- c(group_vars, input$facet_var)
+      }
+      if (!is.null(weight_var)) {
+        plot_data <- plot_data %>%
+          group_by(across(all_of(group_vars))) %>%
+          summarise(Count = sum(!!sym(weight_var), na.rm = TRUE), .groups = 'drop')
+      } else {
+        plot_data <- plot_data %>%
+          group_by(across(all_of(group_vars))) %>%
+          summarise(Count = n(), .groups = 'drop')
+      }
+      total_count <- sum(plot_data$Count)
+      plot_data <- plot_data %>%
+        mutate(Percentage = 100 * Count / total_count)
+      
+      # Round counts to 2 decimal places
+      plot_data$Count <- round(plot_data$Count, 2)
     }
     
+    # Now, create the plot
+    p <- ggplot(plot_data)
+    
+    # For bar chart with percentages and counts
+    if (input$plot_type == "Bar Chart") {
+      p <- p + aes_string(x = input$x_var, y = "Count")
+      if (input$color_var != '') {
+        p <- p + aes_string(fill = input$color_var)
+      }
+      p <- p + geom_bar(stat = "identity", position = "dodge")
+      p <- p + geom_text(aes(label = paste0(Count, "\n", round(Percentage, 2), "%")), 
+                         position = position_dodge(width = 0.9), vjust = -0.25, size = 3.5)
+    } else if (input$plot_type == "Histogram") {
+      # Handle Histogram
+      p <- p + aes_string(x = input$x_var)
+      if (input$color_var != '') {
+        p <- p + aes_string(fill = input$color_var)
+      }
+      if (!is.null(weight_var)) {
+        p <- p + geom_histogram(aes(weight = !!sym(weight_var)), fill = "#0073C2FF", color = "white")
+      } else {
+        p <- p + geom_histogram(fill = "#0073C2FF", color = "white")
+      }
+    } else {
+      # For plots requiring y_var
+      req(input$y_var != '')
+      p <- p + aes_string(x = input$x_var, y = input$y_var)
+      if (input$color_var != '') {
+        p <- p + aes_string(color = input$color_var)
+      }
+      if (input$plot_type == "Box Plot") {
+        p <- p + geom_boxplot()
+      } else if (input$plot_type == "Scatter Plot") {
+        p <- p + geom_point()
+      } else if (input$plot_type == "Line Plot") {
+        p <- p + geom_line()
+      }
+    }
+    
+    # Implement facets as a long series of single charts
     if (input$facet_var != '') {
-      p <- p + facet_wrap(as.formula(paste('~', input$facet_var)))
+      p <- p + facet_wrap(as.formula(paste('~', input$facet_var)), ncol = 1)
     }
     
-    if (input$plot_type == "Histogram") {
-      p <- p + geom_histogram(fill = "#0073C2FF", color = "white")
-    } else if (input$plot_type == "Bar Chart") {
-      p <- p + geom_bar(fill = "#0073C2FF", color = "white")
-    } else if (input$plot_type == "Box Plot") {
-      req(input$y_var != '')
-      p <- p + aes_string(y = input$y_var) + geom_boxplot(fill = "#0073C2FF")
-    } else if (input$plot_type == "Scatter Plot") {
-      req(input$y_var != '')
-      p <- p + aes_string(y = input$y_var) + geom_point()
-    } else if (input$plot_type == "Line Plot") {
-      req(input$y_var != '')
-      p <- p + aes_string(y = input$y_var) + geom_line()
-    }
-    
+    # Apply themes and adjust x-axis labels
     p <- p + theme_minimal(base_size = 15) + 
-      theme(legend.position = "right",
-            plot.title = element_text(hjust = 0.5, face = "bold"))
+      theme(
+        legend.position = "right",
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(size = 12, face = "bold")
+      )
+    
+    # Apply color palette
+    if (input$color_var != '') {
+      if (input$plot_type == "Bar Chart") {
+        p <- p + scale_fill_viridis_d()
+      } else {
+        p <- p + scale_color_viridis_d()
+      }
+    }
     
     # Store code for audit trail
     code$visualizations <<- paste0(
       "# Visualization\n",
-      "ggplot(data, aes(x = ", input$x_var, ifelse(input$y_var != '', paste0(", y = ", input$y_var), ""), ")) + ...")
+      "ggplot(data, aes(x = ", input$x_var,
+      ifelse(input$plot_type == "Bar Chart", ", y = Count", ""),
+      ifelse(input$y_var != '' && input$plot_type != "Bar Chart", paste0(", y = ", input$y_var), ""),
+      ifelse(input$color_var != '', paste0(", fill = ", input$color_var), ""),
+      ifelse(!is.null(weight_var), paste0(", weight = ", weight_var), ""),
+      ")) + ...")
+    
+    # Store plot data for downloading
+    plot_data_reactive(plot_data)
+    
+    plot_obj(p)  # Store the plot object for downloading
     
     ggplotly(p)
   })
+  
+  # Download Plot Handler
+  output$download_plot <- downloadHandler(
+    filename = function() {
+      paste("plot_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      ggsave(file, plot = plot_obj(), device = "png", width = 10, height = 7)
+    }
+  )
+  
+  # Download Plot Data Handler
+  output$download_plot_data <- downloadHandler(
+    filename = function() {
+      paste("plot_data_", Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(plot_data_reactive(), file, row.names = FALSE)
+    }
+  )
   
   ### Statistical Tests Tab ###
   
@@ -259,28 +451,101 @@ server <- function(input, output, session) {
   output$stat_tests_ui <- renderUI({
     req(survey_data())
     tagList(
-      selectInput("test_type", "Select Statistical Test",
-                  choices = c("t-test", "ANOVA", "Chi-Square Test", "Correlation Test", "Mann-Whitney U Test", "Kruskal-Wallis Test")),
-      conditionalPanel(
-        condition = "input.test_type == 't-test' || input.test_type == 'ANOVA' || input.test_type == 'Mann-Whitney U Test' || input.test_type == 'Kruskal-Wallis Test'",
-        selectInput("response_var", "Response Variable", choices = names(survey_data())),
-        selectInput("group_var", "Grouping Variable", choices = names(survey_data()))
+      fluidRow(
+        column(6,
+               selectInput("test_type", "Select Statistical Test",
+                           choices = c("t-test", "ANOVA", "Chi-Square Test", "Correlation Test", "Mann-Whitney U Test", "Kruskal-Wallis Test"))
+        ),
+        column(6,
+               conditionalPanel(
+                 condition = "input.test_type == 'Correlation Test'",
+                 selectInput("method", "Correlation Method", choices = c("pearson", "spearman", "kendall"))
+               )
+        )
       ),
-      conditionalPanel(
-        condition = "input.test_type == 'Chi-Square Test'",
-        selectInput("chi_var1", "Variable 1", choices = names(survey_data())),
-        selectInput("chi_var2", "Variable 2", choices = names(survey_data()))
+      fluidRow(
+        column(6,
+               conditionalPanel(
+                 condition = "input.test_type == 't-test' || input.test_type == 'ANOVA' || input.test_type == 'Mann-Whitney U Test' || input.test_type == 'Kruskal-Wallis Test'",
+                 selectInput("response_var", "Response Variable", choices = names(survey_data()))
+               ),
+               conditionalPanel(
+                 condition = "input.test_type == 'Chi-Square Test'",
+                 selectInput("chi_var1", "Variable 1", choices = names(survey_data()))
+               ),
+               conditionalPanel(
+                 condition = "input.test_type == 'Correlation Test'",
+                 selectInput("cor_var1", "Variable 1", choices = names(survey_data()))
+               )
+        ),
+        column(6,
+               conditionalPanel(
+                 condition = "input.test_type == 't-test' || input.test_type == 'ANOVA' || input.test_type == 'Mann-Whitney U Test' || input.test_type == 'Kruskal-Wallis Test'",
+                 selectInput("group_var", "Grouping Variable", choices = names(survey_data()))
+               ),
+               conditionalPanel(
+                 condition = "input.test_type == 'Chi-Square Test'",
+                 selectInput("chi_var2", "Variable 2", choices = names(survey_data()))
+               ),
+               conditionalPanel(
+                 condition = "input.test_type == 'Correlation Test'",
+                 selectInput("cor_var2", "Variable 2", choices = names(survey_data()))
+               )
+        )
+      )
+    )
+  })
+  ### Statistical Tests Tab ###
+  
+  # Statistical Tests UI
+  output$stat_tests_ui <- renderUI({
+    req(survey_data())
+    tagList(
+      fluidRow(
+        column(6,
+               selectInput("test_type", "Select Statistical Test",
+                           choices = c("t-test", "ANOVA", "Chi-Square Test", "Correlation Test", "Mann-Whitney U Test", "Kruskal-Wallis Test"))
+        ),
+        column(6,
+               conditionalPanel(
+                 condition = "input.test_type == 'Correlation Test'",
+                 selectInput("method", "Correlation Method", choices = c("pearson", "spearman", "kendall"))
+               )
+        )
       ),
-      conditionalPanel(
-        condition = "input.test_type == 'Correlation Test'",
-        selectInput("cor_var1", "Variable 1", choices = names(survey_data())),
-        selectInput("cor_var2", "Variable 2", choices = names(survey_data())),
-        selectInput("method", "Correlation Method", choices = c("pearson", "spearman", "kendall"))
+      fluidRow(
+        column(6,
+               conditionalPanel(
+                 condition = "input.test_type == 't-test' || input.test_type == 'ANOVA' || input.test_type == 'Mann-Whitney U Test' || input.test_type == 'Kruskal-Wallis Test'",
+                 selectInput("response_var", "Response Variable", choices = names(survey_data()))
+               ),
+               conditionalPanel(
+                 condition = "input.test_type == 'Chi-Square Test'",
+                 selectInput("chi_var1", "Variable 1", choices = names(survey_data()))
+               ),
+               conditionalPanel(
+                 condition = "input.test_type == 'Correlation Test'",
+                 selectInput("cor_var1", "Variable 1", choices = names(survey_data()))
+               )
+        ),
+        column(6,
+               conditionalPanel(
+                 condition = "input.test_type == 't-test' || input.test_type == 'ANOVA' || input.test_type == 'Mann-Whitney U Test' || input.test_type == 'Kruskal-Wallis Test'",
+                 selectInput("group_var", "Grouping Variable", choices = names(survey_data()))
+               ),
+               conditionalPanel(
+                 condition = "input.test_type == 'Chi-Square Test'",
+                 selectInput("chi_var2", "Variable 2", choices = names(survey_data()))
+               ),
+               conditionalPanel(
+                 condition = "input.test_type == 'Correlation Test'",
+                 selectInput("cor_var2", "Variable 2", choices = names(survey_data()))
+               )
+        )
       )
     )
   })
   
-  # Statistical Tests Output
   output$stat_tests_output <- renderPrint({
     req(input$test_type)
     data <- survey_data()
@@ -378,7 +643,60 @@ server <- function(input, output, session) {
     test_result
   })
   
+  
+  
   ### Regression Models Tab ###
+  
+  output$regression_ui <- renderUI({
+    req(survey_data())
+    tagList(
+      fluidRow(
+        column(6,
+               selectInput("reg_type", "Select Regression Type",
+                           choices = c("Linear Regression", "Logistic Regression", "Ordinal Logistic Regression"))
+        ),
+        column(6,
+               selectInput("dep_var", "Dependent Variable", choices = names(survey_data()))
+        )
+      ),
+      fluidRow(
+        column(12,
+               pickerInput(
+                 inputId = "indep_vars",
+                 label = "Independent Variables",
+                 choices = names(survey_data()),
+                 options = list(`actions-box` = TRUE),
+                 multiple = TRUE
+               )
+        )
+      ),
+      fluidRow(
+        column(12,
+               conditionalPanel(
+                 condition = "input.reg_type == 'Logistic Regression'",
+                 prettyCheckbox(
+                   inputId = "recode_dep_var",
+                   label = "Recode Dependent Variable to Binary",
+                   status = "primary",
+                   shape = "round",
+                   animation = "pulse"
+                 ),
+                 conditionalPanel(
+                   condition = "input.recode_dep_var == true",
+                   selectInput("dep_var_value", "Value for 'Success' (others will be 'Failure')", choices = NULL)
+                 )
+               )
+        )
+      )
+    )
+  })
+  
+  # Update choices for 'dep_var_value' when 'dep_var' changes
+  observeEvent(input$dep_var, {
+    updateSelectInput(session, "dep_var_value", choices = unique(survey_data()[[input$dep_var]]))
+  })
+  
+
   
   # Regression Models UI
   output$regression_ui <- renderUI({
