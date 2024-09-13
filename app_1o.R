@@ -4,25 +4,45 @@ library(shinythemes)
 library(ggplot2)
 library(plotly)       # For interactive plots
 library(DT)
-library(survey)       # For survey-specific analyses
 library(haven)        # For data import and handling labelled data
 library(dplyr)        # For data manipulation
 library(reshape2)     # For data reshaping
 library(rcompanion)   # For statistical tests on ordinal data
+library(MASS)         # For ordinal logistic regression
+library(readxl)       # For reading Excel files
 
 # Increase the maximum request size to 50 MB (adjust as needed)
-options(shiny.maxRequestSize = 50*1024^2)
+options(shiny.maxRequestSize = 50 * 1024^2)
 
 # Define UI
 ui <- fluidPage(
-  theme = shinytheme("cerulean"),
+  theme = shinytheme("flatly"),  # Changed to a modern and sleek theme
+  tags$head(
+    tags$style(HTML("
+      /* Custom CSS to enhance the appearance */
+      body {
+        font-family: 'Roboto', sans-serif;
+      }
+      .navbar-brand {
+        font-size: 24px;
+        font-weight: bold;
+      }
+      .shiny-input-container {
+        margin-bottom: 15px;
+      }
+      .tab-content {
+        padding-top: 20px;
+      }
+    "))
+  ),
   titlePanel("Advanced Survey Analysis App with Audit Trail"),
   sidebarLayout(
     sidebarPanel(
       fileInput('datafile', 'Upload Survey Data',
                 accept = c('.csv', '.xlsx', '.sav')),
       tags$hr(),
-      uiOutput("global_options_ui")
+      uiOutput("global_options_ui"),
+      width = 3  # Adjusted width for better layout
     ),
     mainPanel(
       tabsetPanel(
@@ -33,7 +53,7 @@ ui <- fluidPage(
                  DTOutput("descriptive_table")),
         tabPanel("Visualizations", 
                  uiOutput("visualization_ui"),
-                 plotlyOutput("plot_output")),
+                 plotlyOutput("plot_output", height = "600px")),
         tabPanel("Statistical Tests", 
                  uiOutput("stat_tests_ui"),
                  verbatimTextOutput("stat_tests_output")),
@@ -44,7 +64,8 @@ ui <- fluidPage(
                  verbatimTextOutput("audit_trail"),
                  downloadButton("download_code", "Download R Script")),
         tabPanel("Report", downloadButton("download_report", "Download Report"))
-      )
+      ),
+      width = 9  # Adjusted width for better layout
     )
   )
 )
@@ -92,7 +113,7 @@ server <- function(input, output, session) {
   # Display data preview
   output$data_preview <- renderDT({
     req(survey_data())
-    datatable(head(survey_data()))
+    datatable(head(survey_data()), options = list(pageLength = 10, scrollX = TRUE))
   })
   
   ### Descriptive Statistics Tab ###
@@ -156,7 +177,7 @@ server <- function(input, output, session) {
       "# For categorical/ordinal variables, provided frequency counts and percentages."
     )
     
-    datatable(desc_results, options = list(pageLength = 10))
+    datatable(desc_results, options = list(pageLength = 10, scrollX = TRUE))
   })
   
   ### Visualizations Tab ###
@@ -180,8 +201,57 @@ server <- function(input, output, session) {
     )
   })
   
-  # Visualization Output (same as before)
-  # [Code remains unchanged, unless there are specific enhancements requested]
+  # Visualization Output
+  output$plot_output <- renderPlotly({
+    req(input$plot_type, input$x_var)
+    data <- survey_data()
+    
+    # Apply filter if selected
+    if (input$apply_filter && input$filter_condition != "") {
+      data <- tryCatch({
+        data %>% filter(eval(parse(text = input$filter_condition)))
+      }, error = function(e) {
+        showNotification("Invalid filter condition in Visualization tab.", type = "error")
+        data
+      })
+    }
+    
+    p <- ggplot(data, aes_string(x = input$x_var))
+    
+    if (input$color_var != '') {
+      p <- p + aes_string(color = input$color_var)
+    }
+    
+    if (input$facet_var != '') {
+      p <- p + facet_wrap(as.formula(paste('~', input$facet_var)))
+    }
+    
+    if (input$plot_type == "Histogram") {
+      p <- p + geom_histogram(fill = "#0073C2FF", color = "white")
+    } else if (input$plot_type == "Bar Chart") {
+      p <- p + geom_bar(fill = "#0073C2FF", color = "white")
+    } else if (input$plot_type == "Box Plot") {
+      req(input$y_var != '')
+      p <- p + aes_string(y = input$y_var) + geom_boxplot(fill = "#0073C2FF")
+    } else if (input$plot_type == "Scatter Plot") {
+      req(input$y_var != '')
+      p <- p + aes_string(y = input$y_var) + geom_point()
+    } else if (input$plot_type == "Line Plot") {
+      req(input$y_var != '')
+      p <- p + aes_string(y = input$y_var) + geom_line()
+    }
+    
+    p <- p + theme_minimal(base_size = 15) + 
+      theme(legend.position = "right",
+            plot.title = element_text(hjust = 0.5, face = "bold"))
+    
+    # Store code for audit trail
+    code$visualizations <<- paste0(
+      "# Visualization\n",
+      "ggplot(data, aes(x = ", input$x_var, ifelse(input$y_var != '', paste0(", y = ", input$y_var), ""), ")) + ...")
+    
+    ggplotly(p)
+  })
   
   ### Statistical Tests Tab ###
   
@@ -218,16 +288,57 @@ server <- function(input, output, session) {
     test_result <- NULL
     
     if (input$test_type == "t-test") {
-      # [Same as before, with appropriate checks]
+      req(input$response_var, input$group_var)
+      if (!is.numeric(data[[input$response_var]])) {
+        showNotification("Response variable must be numeric for t-test.", type = "error")
+        return(NULL)
+      }
+      if (!is.factor(data[[input$group_var]])) {
+        data[[input$group_var]] <- as.factor(data[[input$group_var]])
+      }
+      formula <- as.formula(paste(input$response_var, "~", input$group_var))
+      test_result <- t.test(formula, data = data)
+      code$stats <<- paste0(
+        "# t-test\n",
+        "t.test(", input$response_var, " ~ ", input$group_var, ", data = data)")
     } else if (input$test_type == "ANOVA") {
-      # [Same as before]
+      req(input$response_var, input$group_var)
+      if (!is.numeric(data[[input$response_var]])) {
+        showNotification("Response variable must be numeric for ANOVA.", type = "error")
+        return(NULL)
+      }
+      if (!is.factor(data[[input$group_var]])) {
+        data[[input$group_var]] <- as.factor(data[[input$group_var]])
+      }
+      formula <- as.formula(paste(input$response_var, "~", input$group_var))
+      test_result <- summary(aov(formula, data = data))
+      code$stats <<- paste0(
+        "# ANOVA\n",
+        "summary(aov(", input$response_var, " ~ ", input$group_var, ", data = data))")
     } else if (input$test_type == "Chi-Square Test") {
-      # [Same as before]
+      req(input$chi_var1, input$chi_var2)
+      if (!is.factor(data[[input$chi_var1]])) {
+        data[[input$chi_var1]] <- as.factor(data[[input$chi_var1]])
+      }
+      if (!is.factor(data[[input$chi_var2]])) {
+        data[[input$chi_var2]] <- as.factor(data[[input$chi_var2]])
+      }
+      test_result <- chisq.test(table(data[[input$chi_var1]], data[[input$chi_var2]]))
+      code$stats <<- paste0(
+        "# Chi-Square Test\n",
+        "chisq.test(table(data$", input$chi_var1, ", data$", input$chi_var2, "))")
     } else if (input$test_type == "Correlation Test") {
-      # [Same as before]
+      req(input$cor_var1, input$cor_var2, input$method)
+      if (!is.numeric(data[[input$cor_var1]]) || !is.numeric(data[[input$cor_var2]])) {
+        showNotification("Both variables must be numeric for Correlation Test.", type = "error")
+        return(NULL)
+      }
+      test_result <- cor.test(data[[input$cor_var1]], data[[input$cor_var2]], method = input$method)
+      code$stats <<- paste0(
+        "# Correlation Test\n",
+        "cor.test(data$", input$cor_var1, ", data$", input$cor_var2, ", method = '", input$method, "')")
     } else if (input$test_type == "Mann-Whitney U Test") {
       req(input$response_var, input$group_var)
-      # Ensure response variable is at least ordinal
       if (!is.numeric(data[[input$response_var]]) && !is.ordered(data[[input$response_var]])) {
         showNotification("Response variable must be numeric or ordinal for Mann-Whitney U Test.", type = "error")
         return(NULL)
@@ -241,14 +352,11 @@ server <- function(input, output, session) {
       }
       formula <- as.formula(paste(input$response_var, "~", input$group_var))
       test_result <- wilcox.test(formula, data = data)
-      # Store code for audit trail
       code$stats <<- paste0(
         "# Mann-Whitney U Test\n",
-        "wilcox.test(", input$response_var, " ~ ", input$group_var, ", data = data)"
-      )
+        "wilcox.test(", input$response_var, " ~ ", input$group_var, ", data = data)")
     } else if (input$test_type == "Kruskal-Wallis Test") {
       req(input$response_var, input$group_var)
-      # Ensure response variable is at least ordinal
       if (!is.numeric(data[[input$response_var]]) && !is.ordered(data[[input$response_var]])) {
         showNotification("Response variable must be numeric or ordinal for Kruskal-Wallis Test.", type = "error")
         return(NULL)
@@ -262,11 +370,9 @@ server <- function(input, output, session) {
       }
       formula <- as.formula(paste(input$response_var, "~", input$group_var))
       test_result <- kruskal.test(formula, data = data)
-      # Store code for audit trail
       code$stats <<- paste0(
         "# Kruskal-Wallis Test\n",
-        "kruskal.test(", input$response_var, " ~ ", input$group_var, ", data = data)"
-      )
+        "kruskal.test(", input$response_var, " ~ ", input$group_var, ", data = data)")
     }
     
     test_result
@@ -334,8 +440,7 @@ server <- function(input, output, session) {
       code$regression <<- paste0(
         "# Linear Regression\n",
         "model <- lm(", formula_text, ", data = data)\n",
-        "summary(model)"
-      )
+        "summary(model)")
     } else if (input$reg_type == "Logistic Regression") {
       # Ensure dependent variable is binary factor
       if (!is.factor(data[[input$dep_var]])) {
@@ -351,8 +456,7 @@ server <- function(input, output, session) {
       code$regression <<- paste0(
         "# Logistic Regression\n",
         "model <- glm(", formula_text, ", data = data, family = binomial)\n",
-        "summary(model)"
-      )
+        "summary(model)")
     } else if (input$reg_type == "Ordinal Logistic Regression") {
       # Ensure dependent variable is ordered factor
       if (!is.ordered(data[[input$dep_var]])) {
@@ -364,8 +468,7 @@ server <- function(input, output, session) {
       code$regression <<- paste0(
         "# Ordinal Logistic Regression\n",
         "model <- MASS::polr(", formula_text, ", data = data, Hess = TRUE)\n",
-        "summary(model)"
-      )
+        "summary(model)")
     }
     
     summary(model)
