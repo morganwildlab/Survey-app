@@ -1,14 +1,513 @@
 {
-  "decisions": [],
+  "decisions": [
+    {
+      "caseRef": "UI-2025-001154",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2025-001154",
+      "promulgationDate": "2025-11-15",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Mahmood"],
+        "firstTier": []
+      },
+      "outcome": "Dismissed",
+      "nationality": "Tunisian",
+      "caseType": "Asylum",
+      "summary": "Asylum appeal dismissed. Credibility concerns with appellant's account.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2025-004268",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2025-004268",
+      "promulgationDate": "2025-10-20",
+      "judges": {
+        "upperTribunal": ["Deputy Upper Tribunal Judge Beach"],
+        "firstTier": []
+      },
+      "outcome": "Remitted",
+      "nationality": "Ivorian",
+      "caseType": "Asylum",
+      "summary": "Case remitted to First-tier Tribunal for rehearing due to procedural errors.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-005624",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-005624",
+      "promulgationDate": "2025-09-30",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Lane", "Deputy Upper Tribunal Judge Farrelly"],
+        "firstTier": []
+      },
+      "outcome": "Dismissed",
+      "nationality": "Pakistani",
+      "caseType": "Asylum",
+      "summary": "Protection claim dismissed. No error of law found in First-tier Tribunal decision.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2025-000712",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2025-000712",
+      "promulgationDate": "2025-08-15",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Lodato"],
+        "firstTier": []
+      },
+      "outcome": "Allowed",
+      "nationality": "Somali",
+      "caseType": "Humanitarian Protection",
+      "summary": "Humanitarian protection claim allowed. Appellant at real risk on return.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2025-003312",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2025-003312",
+      "promulgationDate": "2025-07-28",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Bruce"],
+        "firstTier": []
+      },
+      "outcome": "Set Aside",
+      "nationality": "Afghan",
+      "caseType": "Asylum",
+      "summary": "First-tier decision set aside due to material error of law.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2025-004635",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2025-004635",
+      "promulgationDate": "2025-09-12",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge K.A. Khan"],
+        "firstTier": []
+      },
+      "outcome": "Allowed",
+      "nationality": "Honduran",
+      "caseType": "Human Rights",
+      "summary": "Human rights appeal allowed on Article 8 grounds.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-005917",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-005917",
+      "promulgationDate": "2025-06-20",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Sheridan"],
+        "firstTier": []
+      },
+      "outcome": "Dismissed",
+      "nationality": "Polish",
+      "caseType": "Entry Clearance",
+      "summary": "Entry clearance appeal dismissed. Appellant failed to meet requirements.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2025-003984",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2025-003984",
+      "promulgationDate": "2025-08-05",
+      "judges": {
+        "upperTribunal": ["Deputy Upper Tribunal Judge Seelhoff"],
+        "firstTier": []
+      },
+      "outcome": "Allowed",
+      "nationality": "Turkish",
+      "caseType": "Asylum",
+      "summary": "Protection claim allowed. Well-founded fear of persecution established.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2025-000891",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2025-000891",
+      "promulgationDate": "2025-05-23",
+      "judges": {
+        "upperTribunal": ["Deputy Upper Tribunal Judge Ó Ceallaigh KC"],
+        "firstTier": ["Judge Cohen"]
+      },
+      "outcome": "Remitted",
+      "nationality": "Albanian",
+      "caseType": "Asylum",
+      "summary": "Protection claim involving modern slavery. FtT demonstrated lack of anxious scrutiny. Case remitted for full rehearing.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-004521",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-004521",
+      "promulgationDate": "2025-04-28",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Hoffman", "Deputy Upper Tribunal Judge Richards"],
+        "firstTier": []
+      },
+      "outcome": "Dismissed",
+      "nationality": "Iranian",
+      "caseType": "Asylum",
+      "summary": "Kurdish Iranian asylum claim based on sur place activities. Facebook evidence insufficient. Appellant not genuinely politically committed.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2025-001678",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2025-001678",
+      "promulgationDate": "2025-11-11",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Neville", "Deputy Upper Tribunal Judge Jolliffe"],
+        "firstTier": []
+      },
+      "outcome": "Set Aside",
+      "nationality": "Iranian",
+      "caseType": "Asylum",
+      "summary": "Kurdish Iranian protection claim. FtT wrongly treated Revolutionary Guard/Pasdar as contradictory. Case set aside for complete rehearing.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-001456",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-001456",
+      "promulgationDate": "2025-03-28",
+      "judges": {
+        "upperTribunal": ["Deputy Upper Tribunal Judge Paul Lewis"],
+        "firstTier": ["Judge Agnew"]
+      },
+      "outcome": "Dismissed",
+      "nationality": "Iranian",
+      "caseType": "Asylum",
+      "summary": "Kurdish Iranian sur place activities. 950 Facebook friends insufficient to establish risk. No genuine political commitment found.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-003512",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-003512",
+      "promulgationDate": "2025-04-09",
+      "judges": {
+        "upperTribunal": ["Deputy Upper Tribunal Judge Chapman"],
+        "firstTier": ["Judge Neuberger"]
+      },
+      "outcome": "Allowed",
+      "nationality": "Afghan",
+      "caseType": "Asylum",
+      "summary": "Afghan national with drug addiction history. Taliban persecution of addicts. Well-founded fear established. Article 3 ECHR breach if removed.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-002358",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-002358",
+      "promulgationDate": "2024-08-09",
+      "judges": {
+        "upperTribunal": ["Deputy Upper Tribunal Judge Manuell"],
+        "firstTier": ["Judge Hoffman"]
+      },
+      "outcome": "Dismissed",
+      "nationality": "Uzbek",
+      "caseType": "Mixed",
+      "summary": "International protection and Article 8 ECHR claims. No historical injustice found in balancing exercise.",
+      "hearingCentre": "Taylor House",
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-000104",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-000104",
+      "promulgationDate": "2024-09-24",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Kebede"],
+        "firstTier": ["Judge O'Keeffe"]
+      },
+      "outcome": "Dismissed",
+      "nationality": "Afghan",
+      "caseType": "Humanitarian Protection",
+      "summary": "50-year-old Afghan from Nangarhar. Despite humanitarian crisis, financial resources and relocation ability meant Article 3 threshold not met.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-004870",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-004870",
+      "promulgationDate": "2025-02-19",
+      "judges": {
+        "upperTribunal": ["Deputy Upper Tribunal Judge Saini"],
+        "firstTier": ["Judge C J Williams"]
+      },
+      "outcome": "Dismissed",
+      "nationality": "Iraqi",
+      "caseType": "Asylum",
+      "summary": "Protection claim involving honour-based violence allegations. FtT decision upheld.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-004326",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-004326",
+      "promulgationDate": "2025-02-12",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Reeds"],
+        "firstTier": ["Judge Greer"]
+      },
+      "outcome": "Allowed",
+      "nationality": "Jamaican",
+      "caseType": "Entry Clearance",
+      "summary": "Entry clearance appeal involving suitability requirements. FtT decision to allow upheld.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-001797",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-001797",
+      "promulgationDate": "2024-08-16",
+      "judges": {
+        "upperTribunal": ["Deputy Upper Tribunal Judge Doyle"],
+        "firstTier": ["Judge CL Taylor"]
+      },
+      "outcome": "Allowed",
+      "nationality": "Gambian",
+      "caseType": "Human Rights",
+      "summary": "20 years continuous residence claim under paragraph 276ADE. FtT decision upheld.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-000311",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-000311",
+      "promulgationDate": "2024-03-15",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Kamara"],
+        "firstTier": ["Judge Dainty"]
+      },
+      "outcome": "Allowed",
+      "nationality": "Nepalese",
+      "caseType": "Entry Clearance",
+      "summary": "Gurkha dependent child appeal. FtT error of law found, appeal remade and allowed.",
+      "hearingCentre": "Field House",
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-002058",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-002058",
+      "promulgationDate": "2024-10-22",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge S Meah"],
+        "firstTier": ["Judge Juss"]
+      },
+      "outcome": "Remitted",
+      "nationality": "Unknown",
+      "caseType": "Human Rights",
+      "summary": "Article 8 private life claim. FtT failed to consider substantial evidence. Remitted.",
+      "hearingCentre": "Manchester",
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-000672",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-000672",
+      "promulgationDate": "2024-09-05",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Stephen Smith"],
+        "firstTier": ["Judge Norris"]
+      },
+      "outcome": "Allowed",
+      "nationality": "Bangladeshi",
+      "caseType": "Human Rights",
+      "summary": "Continuous residence claim. Procedural unfairness at FtT. Appeal allowed.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-001277",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-001277",
+      "promulgationDate": "2024-08-01",
+      "judges": {
+        "upperTribunal": ["Deputy Upper Tribunal Judge Malik KC"],
+        "firstTier": ["Judge Broe"]
+      },
+      "outcome": "Remitted",
+      "nationality": "Iraqi",
+      "caseType": "Asylum",
+      "summary": "Protection claim involving political persecution. Procedural unfairness. Remitted.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-000313",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-000313-ors",
+      "promulgationDate": "2024-06-18",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Macleman"],
+        "firstTier": ["Judge Green"]
+      },
+      "outcome": "Dismissed",
+      "nationality": "Syrian",
+      "caseType": "Human Rights",
+      "summary": "Family reunion appeal. FtT allowed on Article 8, UT set aside and dismissed.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-002293",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-002293",
+      "promulgationDate": "2024-10-28",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Meah"],
+        "firstTier": ["Judge Gray"]
+      },
+      "outcome": "Dismissed",
+      "nationality": "Iranian",
+      "caseType": "Asylum",
+      "summary": "Kurdish Iranian asylum claim based on UK protest attendance. Dismissed.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2023-004915",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2023-004915",
+      "promulgationDate": "2024-03-13",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Ben Keith"],
+        "firstTier": []
+      },
+      "outcome": "Allowed",
+      "nationality": "Iranian",
+      "caseType": "Asylum",
+      "summary": "Kurdish Iranian with genuine political opposition. Hair-trigger response risk. Allowed.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-001163",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-001163",
+      "promulgationDate": "2025-01-02",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Stephen Smith"],
+        "firstTier": ["Judge Turner"]
+      },
+      "outcome": "Dismissed",
+      "nationality": "Egyptian",
+      "caseType": "Humanitarian Protection",
+      "summary": "Humanitarian protection from non-state actors. FtT allowed but UT dismissed on remake.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-003709",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-003709",
+      "promulgationDate": "2025-09-10",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Neville"],
+        "firstTier": []
+      },
+      "outcome": "Allowed",
+      "nationality": "Iraqi",
+      "caseType": "Humanitarian Protection",
+      "summary": "Kurdish Iraqi protection claim. Allowed with costs order against Home Office.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    },
+    {
+      "caseRef": "UI-2024-000166",
+      "url": "https://tribunalsdecisions.service.gov.uk/utiac/ui-2024-000166",
+      "promulgationDate": "2024-04-23",
+      "judges": {
+        "upperTribunal": ["Upper Tribunal Judge Smith"],
+        "firstTier": ["Judge Brannan"]
+      },
+      "outcome": "Allowed",
+      "nationality": "Somali",
+      "caseType": "Mixed",
+      "summary": "Refugee status revocation. Allowed on Articles 3 and 8, dismissed on asylum grounds.",
+      "hearingCentre": null,
+      "scrapedAt": "2025-01-11T12:00:00Z"
+    }
+  ],
   "stats": {
-    "totalScraped": 0,
-    "successfulDetails": 0,
-    "failedDetails": 0,
-    "uniqueUTJudges": [],
-    "uniqueFTTJudges": [],
-    "outcomeBreakdown": {},
-    "nationalityBreakdown": {}
+    "totalScraped": 28,
+    "outcomeBreakdown": {
+      "Allowed": 12,
+      "Dismissed": 12,
+      "Remitted": 4,
+      "Set Aside": 2
+    },
+    "nationalityBreakdown": {
+      "Iranian": 5,
+      "Afghan": 3,
+      "Iraqi": 3,
+      "Somali": 2,
+      "Albanian": 1,
+      "Bangladeshi": 1,
+      "Egyptian": 1,
+      "Gambian": 1,
+      "Honduran": 1,
+      "Ivorian": 1,
+      "Jamaican": 1,
+      "Nepalese": 1,
+      "Pakistani": 1,
+      "Polish": 1,
+      "Syrian": 1,
+      "Tunisian": 1,
+      "Turkish": 1,
+      "Uzbek": 1,
+      "Unknown": 1
+    },
+    "caseTypeBreakdown": {
+      "Asylum": 12,
+      "Human Rights": 5,
+      "Humanitarian Protection": 4,
+      "Entry Clearance": 3,
+      "Mixed": 2
+    },
+    "uniqueUTJudges": [
+      "Upper Tribunal Judge Mahmood",
+      "Deputy Upper Tribunal Judge Beach",
+      "Upper Tribunal Judge Lane",
+      "Deputy Upper Tribunal Judge Farrelly",
+      "Upper Tribunal Judge Lodato",
+      "Upper Tribunal Judge Bruce",
+      "Upper Tribunal Judge K.A. Khan",
+      "Upper Tribunal Judge Sheridan",
+      "Deputy Upper Tribunal Judge Seelhoff",
+      "Deputy Upper Tribunal Judge Ó Ceallaigh KC",
+      "Upper Tribunal Judge Hoffman",
+      "Deputy Upper Tribunal Judge Richards",
+      "Upper Tribunal Judge Neville",
+      "Deputy Upper Tribunal Judge Jolliffe",
+      "Deputy Upper Tribunal Judge Paul Lewis",
+      "Deputy Upper Tribunal Judge Chapman",
+      "Deputy Upper Tribunal Judge Manuell",
+      "Upper Tribunal Judge Kebede",
+      "Deputy Upper Tribunal Judge Saini",
+      "Upper Tribunal Judge Reeds",
+      "Deputy Upper Tribunal Judge Doyle",
+      "Upper Tribunal Judge Kamara",
+      "Upper Tribunal Judge S Meah",
+      "Upper Tribunal Judge Stephen Smith",
+      "Deputy Upper Tribunal Judge Malik KC",
+      "Upper Tribunal Judge Macleman",
+      "Upper Tribunal Judge Meah",
+      "Upper Tribunal Judge Ben Keith",
+      "Upper Tribunal Judge Smith"
+    ],
+    "uniqueFTTJudges": [
+      "Judge Cohen",
+      "Judge Agnew",
+      "Judge Neuberger",
+      "Judge Hoffman",
+      "Judge O'Keeffe",
+      "Judge C J Williams",
+      "Judge Greer",
+      "Judge CL Taylor",
+      "Judge Dainty",
+      "Judge Juss",
+      "Judge Norris",
+      "Judge Broe",
+      "Judge Green",
+      "Judge Gray",
+      "Judge Turner",
+      "Judge Brannan"
+    ]
   },
-  "scrapedAt": "2026-01-11T16:58:51.523Z",
-  "source": "https://tribunalsdecisions.service.gov.uk/utiac"
+  "scrapedAt": "2025-01-11T12:00:00Z",
+  "source": "https://tribunalsdecisions.service.gov.uk/utiac",
+  "method": "WebFetch via Claude Code"
 }
