@@ -20,9 +20,9 @@ const tabs = [
   { id: 'overview' as TabType, label: 'Overview', icon: LayoutDashboard },
   { id: 'trends' as TabType, label: 'Yearly Trends', icon: TrendingUp },
   { id: 'nationality' as TabType, label: 'By Nationality', icon: Globe2 },
-  { id: 'courts' as TabType, label: 'Immigration Courts', icon: Building2 },
+  { id: 'courts' as TabType, label: 'Tribunal Centres', icon: Building2 },
   { id: 'judges' as TabType, label: 'Judge Statistics', icon: Scale },
-  { id: 'proceedings' as TabType, label: 'Court Proceedings', icon: FileText },
+  { id: 'proceedings' as TabType, label: 'Tribunal Proceedings', icon: FileText },
   { id: 'representation' as TabType, label: 'Legal Representation', icon: Users },
   { id: 'backlog' as TabType, label: 'Case Backlog', icon: Clock },
 ];
@@ -66,15 +66,15 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen }: SidebarProp
           <div className="space-y-3 px-3">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Total Pending</span>
-              <span className="font-semibold text-slate-700">2.46M</span>
+              <span className="font-semibold text-slate-700">198.9K</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">FY2024 Grant Rate</span>
-              <span className="font-semibold text-green-600">44.2%</span>
+              <span className="text-slate-500">2024 Grant Rate</span>
+              <span className="font-semibold text-green-600">47.2%</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Avg Wait Time</span>
-              <span className="font-semibold text-orange-600">4.3 yrs</span>
+              <span className="font-semibold text-orange-600">14 mo</span>
             </div>
           </div>
         </div>

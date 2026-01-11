@@ -74,7 +74,7 @@ export default function CourtsTab() {
   const tableColumns = [
     {
       key: 'court',
-      header: 'Immigration Court',
+      header: 'Tribunal Centre',
       render: (item: typeof courtStats[0]) => (
         <div>
           <span className="font-medium text-slate-800">{item.court}</span>
@@ -140,7 +140,7 @@ export default function CourtsTab() {
       key: 'avgProcessingDays',
       header: 'Avg Wait',
       render: (item: typeof courtStats[0]) =>
-        `${Math.round(item.avgProcessingDays / 365 * 10) / 10} yrs`,
+        `${Math.round(item.avgProcessingDays / 30)} mo`,
       className: 'text-right',
     },
   ];
@@ -149,17 +149,17 @@ export default function CourtsTab() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          Immigration Court Statistics
+          Tribunal Centre Statistics
         </h2>
         <p className="text-slate-500">
-          Analyze case volumes, grant rates, and backlogs across immigration courts
+          Analyse case volumes, grant rates, and backlogs across First-tier Tribunal centres
         </p>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Immigration Courts"
+          title="Total Tribunal Centres"
           value={courtStats.length}
           icon={<Building2 className="w-5 h-5" />}
           color="blue"
@@ -167,7 +167,7 @@ export default function CourtsTab() {
         <StatCard
           title="Average Grant Rate"
           value={`${avgGrantRate.toFixed(1)}%`}
-          subtitle="Across all courts"
+          subtitle="Across all centres"
           icon={<Scale className="w-5 h-5" />}
           color="green"
         />
@@ -180,7 +180,7 @@ export default function CourtsTab() {
         />
         <StatCard
           title="Avg Processing Time"
-          value={`${(avgProcessing / 365).toFixed(1)} yrs`}
+          value={`${Math.round(avgProcessing / 30)} mo`}
           subtitle="To decision"
           icon={<Clock className="w-5 h-5" />}
           color="purple"
@@ -190,8 +190,8 @@ export default function CourtsTab() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartCard
-          title="Courts by Case Volume"
-          subtitle="Top 10 immigration courts by total cases"
+          title="Centres by Case Volume"
+          subtitle="Top 10 tribunal centres by total cases"
         >
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -223,8 +223,8 @@ export default function CourtsTab() {
         </ChartCard>
 
         <ChartCard
-          title="Courts by Backlog Size"
-          subtitle="Top 10 courts with largest pending caseloads"
+          title="Centres by Backlog Size"
+          subtitle="Top 10 centres with largest pending caseloads"
         >
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -258,8 +258,8 @@ export default function CourtsTab() {
 
       {/* Grant Rate Comparison */}
       <ChartCard
-        title="Grant Rate Comparison Across Courts"
-        subtitle="Asylum grant rates vary significantly by location"
+        title="Grant Rate Comparison Across Centres"
+        subtitle="Asylum grant rates vary by tribunal location"
       >
         <div className="h-96">
           <ResponsiveContainer width="100%" height="100%">
@@ -311,29 +311,28 @@ export default function CourtsTab() {
         </div>
         <div className="mt-4 p-4 bg-purple-50 rounded-lg">
           <p className="text-sm text-purple-800">
-            <strong>Disparity Alert:</strong> Grant rates range from{' '}
+            <strong>Variation Note:</strong> Grant rates range from{' '}
             {Math.min(...courtStats.map((c) => c.grantRate))}% to{' '}
-            {Math.max(...courtStats.map((c) => c.grantRate))}% across courts. The
-            same asylum case can have vastly different outcomes depending on court
-            assignment.
+            {Math.max(...courtStats.map((c) => c.grantRate))}% across centres. Outcomes
+            can vary depending on which tribunal centre handles the appeal.
           </p>
         </div>
       </ChartCard>
 
       {/* Full Data Table */}
       <ChartCard
-        title="Complete Court Statistics"
-        subtitle="All immigration courts with detailed metrics"
+        title="Complete Centre Statistics"
+        subtitle="All First-tier Tribunal centres with detailed metrics"
         actions={
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">State:</span>
+              <span className="text-sm text-slate-500">Region:</span>
               <select
                 value={selectedState}
                 onChange={(e) => setSelectedState(e.target.value)}
                 className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">All States</option>
+                <option value="all">All Regions</option>
                 {states.slice(1).map((state) => (
                   <option key={state} value={state}>
                     {state}

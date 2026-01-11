@@ -27,7 +27,7 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
                 Asylum Data Analytics
               </h1>
               <p className="text-sm text-slate-500">
-                Immigration Court Proceedings Dashboard
+                UK Home Office & Tribunal Data Dashboard
               </p>
             </div>
           </div>
@@ -37,17 +37,17 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
           <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full">
             <Database className="w-4 h-4 text-green-600" />
             <span className="text-sm font-medium text-green-700">
-              Data: FY2015-FY2024
+              Data: 2015-2024
             </span>
           </div>
 
           <a
-            href="https://tracreports.org"
+            href="https://www.gov.uk/government/collections/immigration-statistics-quarterly-release"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition-colors"
           >
-            <span>TRAC Data</span>
+            <span>Home Office Data</span>
             <ExternalLink className="w-4 h-4" />
           </a>
         </div>

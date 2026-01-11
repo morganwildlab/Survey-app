@@ -69,20 +69,20 @@ export default function OverviewTab() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          Asylum Data Overview
+          UK Asylum Data Overview
         </h2>
         <p className="text-slate-500">
-          Comprehensive analysis of U.S. asylum cases from FY2015 to FY2024
+          Comprehensive analysis of UK asylum cases from 2015 to 2024
         </p>
       </div>
 
       {/* Key Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="FY2024 Applications"
+          title="2024 Applications"
           value={formatNumber(latestYear.applications)}
           icon={<Users className="w-5 h-5" />}
-          trend={{ value: Math.round(applicationsTrend), label: 'vs FY2023' }}
+          trend={{ value: Math.round(applicationsTrend), label: 'vs 2023' }}
           color="blue"
         />
         <StatCard
@@ -90,7 +90,7 @@ export default function OverviewTab() {
           value={formatNumber(latestYear.granted)}
           subtitle={`${latestYear.grantRate}% grant rate`}
           icon={<CheckCircle className="w-5 h-5" />}
-          trend={{ value: Math.round(grantRateTrend * 10) / 10, label: 'vs FY2023' }}
+          trend={{ value: Math.round(grantRateTrend * 10) / 10, label: 'vs 2023' }}
           color="green"
         />
         <StatCard
@@ -112,7 +112,7 @@ export default function OverviewTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartCard
           title="Asylum Applications Trend"
-          subtitle="FY2015 - FY2024"
+          subtitle="2015 - 2024"
         >
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -239,7 +239,7 @@ export default function OverviewTab() {
         </ChartCard>
 
         <ChartCard
-          title="Busiest Immigration Courts"
+          title="Busiest Tribunal Centres"
           subtitle="By case volume"
           actions={
             <Building2 className="w-5 h-5 text-slate-400" />
@@ -289,7 +289,7 @@ export default function OverviewTab() {
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
-          title="Total Courts"
+          title="Tribunal Centres"
           value={courtStats.length}
           icon={<Building2 className="w-5 h-5" />}
           color="purple"
@@ -302,15 +302,15 @@ export default function OverviewTab() {
         />
         <StatCard
           title="Avg Grant Rate"
-          value="42.3%"
+          value="44.3%"
           subtitle="10-year average"
           icon={<TrendingUp className="w-5 h-5" />}
           color="green"
         />
         <StatCard
           title="Avg Processing"
-          value="4.3 years"
-          subtitle="Defensive cases"
+          value="14 months"
+          subtitle="Initial decision"
           icon={<Scale className="w-5 h-5" />}
           color="orange"
         />
