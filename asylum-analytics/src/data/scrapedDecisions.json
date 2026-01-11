@@ -1,0 +1,14 @@
+{
+  "decisions": [],
+  "stats": {
+    "totalScraped": 0,
+    "successfulDetails": 0,
+    "failedDetails": 0,
+    "uniqueUTJudges": [],
+    "uniqueFTTJudges": [],
+    "outcomeBreakdown": {},
+    "nationalityBreakdown": {}
+  },
+  "scrapedAt": "2026-01-11T16:58:51.523Z",
+  "source": "https://tribunalsdecisions.service.gov.uk/utiac"
+}
