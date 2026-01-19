@@ -475,6 +475,7 @@
                 <div class="tabs">
                     <button class="tab-btn active" data-tab="timeSeries">Time Series</button>
                     <button class="tab-btn" data-tab="composition">Composition</button>
+                    <button class="tab-btn" data-tab="disability">Disability</button>
                     <button class="tab-btn" data-tab="caseload">Caseload</button>
                     <button class="tab-btn" data-tab="data">Data Table</button>
                     <button class="tab-btn" data-tab="methodology">Methodology</button>
@@ -512,6 +513,34 @@
                         <div class="stats-grid" id="statsGrid"></div>
                         <div class="chart-container" style="height: 350px;">
                             <canvas id="compositionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disability Tab -->
+                <div id="disability" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            Disability Benefits Breakdown
+                            <span class="info-icon" title="PIP, DLA, Attendance Allowance, ESA (Contributory), and Carer's Allowance">&#9432;</span>
+                        </div>
+                        <div class="chart-container" style="height: 500px;">
+                            <canvas id="disabilityAreaChart"></canvas>
+                        </div>
+                        <div class="legend-note">
+                            Stacked area chart showing composition of disability-related spending over time
+                        </div>
+                    </div>
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-header">Disability Spending Summary</div>
+                        <div class="stats-grid" id="disabilityStatsGrid"></div>
+                    </div>
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-header">
+                            Individual Disability Benefits (Line Chart)
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="disabilityLineChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -681,7 +710,9 @@
             'UC (Incapacity)': '#2563eb',
             'ESA (All)': '#dc2626',
             'Incapacity Total': '#7c3aed',
-            'PIP/DLA': '#059669'
+            'PIP/DLA': '#059669',
+            'Total Disability': '#0d9488',
+            'Disability + Carers': '#0f766e'
         };
 
         // ============================================================================
@@ -789,6 +820,18 @@
 
             benefits['UC + Legacy Total'] = expenditureData.years.map((_, i) =>
                 (benefits['Universal Credit']?.[i] || 0) + (benefits['Legacy Benefits']?.[i] || 0)
+            );
+
+            // Disability benefits totals
+            const disabilityBenefits = ['PIP', 'DLA', 'Attendance Allowance', 'ESA (Contributory)'];
+
+            benefits['Total Disability'] = expenditureData.years.map((_, i) =>
+                disabilityBenefits.reduce((sum, b) => sum + (benefits[b]?.[i] || 0), 0)
+            );
+
+            // Including Carer's Allowance (often grouped with disability)
+            benefits['Disability + Carers'] = expenditureData.years.map((_, i) =>
+                (benefits['Total Disability']?.[i] || 0) + (benefits["Carer's Allowance"]?.[i] || 0)
             );
 
             return benefits;
@@ -1005,6 +1048,125 @@
             });
         }
 
+        function createDisabilityCharts() {
+            const { startIdx, endIdx } = getFilteredData();
+
+            let benefits = applyAdjustments(expenditureData.benefits);
+            benefits = convertValues(benefits);
+            benefits = calculateCombinedTotals(benefits);
+
+            const labels = expenditureData.fiscalYears.slice(startIdx, endIdx + 1);
+
+            // Disability benefits for the stacked area chart
+            const disabilityBenefits = ['PIP', 'DLA', 'Attendance Allowance', 'ESA (Contributory)', "Carer's Allowance"];
+
+            // Stacked Area Chart
+            const areaCtx = document.getElementById('disabilityAreaChart').getContext('2d');
+            if (charts.disabilityArea) charts.disabilityArea.destroy();
+
+            charts.disabilityArea = new Chart(areaCtx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: disabilityBenefits.map((benefit, index) => ({
+                        label: benefit,
+                        data: benefits[benefit].slice(startIdx, endIdx + 1),
+                        borderColor: benefitColors[benefit],
+                        backgroundColor: benefitColors[benefit] + '80',
+                        fill: true,
+                        tension: 0.1,
+                        order: disabilityBenefits.length - index
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: {
+                            display: true,
+                            text: 'Disability & Carer Benefits Spending Breakdown'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: true,
+                            title: { display: true, text: getYAxisLabel() }
+                        },
+                        x: { stacked: true }
+                    }
+                }
+            });
+
+            // Line Chart for individual comparison
+            const lineCtx = document.getElementById('disabilityLineChart').getContext('2d');
+            if (charts.disabilityLine) charts.disabilityLine.destroy();
+
+            charts.disabilityLine = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: disabilityBenefits.map(benefit => ({
+                        label: benefit,
+                        data: benefits[benefit].slice(startIdx, endIdx + 1),
+                        borderColor: benefitColors[benefit],
+                        backgroundColor: benefitColors[benefit],
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.1,
+                        fill: false
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: getYAxisLabel() }
+                        }
+                    }
+                }
+            });
+
+            // Update stats grid
+            const latestIdx = endIdx;
+            const earliestIdx = startIdx;
+            const totalDisability = benefits['Disability + Carers'][latestIdx];
+            const totalDisabilityStart = benefits['Disability + Carers'][earliestIdx];
+            const pipLatest = benefits['PIP'][latestIdx];
+            const dlaLatest = benefits['DLA'][latestIdx];
+
+            const statsGrid = document.getElementById('disabilityStatsGrid');
+            const suffix = state.valueType === 'gdpShare' ? '% GDP' : '£bn';
+            const changePercent = ((totalDisability - totalDisabilityStart) / totalDisabilityStart * 100).toFixed(1);
+
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalDisability.toFixed(1)}</div>
+                    <div class="stat-label">Total Disability + Carers (${expenditureData.fiscalYears[latestIdx]}) ${suffix}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${pipLatest.toFixed(1)}</div>
+                    <div class="stat-label">PIP ${suffix}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${dlaLatest.toFixed(1)}</div>
+                    <div class="stat-label">DLA ${suffix}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: ${changePercent > 0 ? '#dc2626' : '#059669'}">
+                        ${changePercent > 0 ? '+' : ''}${changePercent}%
+                    </div>
+                    <div class="stat-label">Change since ${expenditureData.fiscalYears[earliestIdx]}</div>
+                </div>
+            `;
+        }
+
         function createCaseloadChart() {
             const ctx = document.getElementById('caseloadChart').getContext('2d');
             const { startIdx, endIdx } = getFilteredData();
@@ -1202,6 +1364,7 @@
             createTimeSeriesChart();
             createTransitionChart();
             createCompositionChart();
+            createDisabilityCharts();
             createCaseloadChart();
             createDataTable();
         }
