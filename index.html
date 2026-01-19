@@ -521,14 +521,14 @@
                 <div id="disability" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            Disability Benefits Breakdown
-                            <span class="info-icon" title="PIP, DLA, Attendance Allowance, ESA (Contributory), and Carer's Allowance">&#9432;</span>
+                            All Incapacity & Disability Spending
+                            <span class="info-icon" title="UC Health Element (LCWRA), ESA (Income-Based & Contributory), PIP, DLA, Attendance Allowance, and Carer's Allowance">&#9432;</span>
                         </div>
                         <div class="chart-container" style="height: 500px;">
                             <canvas id="disabilityAreaChart"></canvas>
                         </div>
                         <div class="legend-note">
-                            Stacked area chart showing composition of disability-related spending over time
+                            Stacked area chart showing full incapacity/disability spending including UC health journey (LCWRA), ESA, PIP/DLA, and Carer's Allowance
                         </div>
                     </div>
                     <div class="card" style="margin-top: 20px;">
@@ -642,6 +642,9 @@
 
             benefits: {
                 'Universal Credit': [0, 0, 0, 0.1, 0.5, 1.2, 2.8, 5.1, 8.9, 16.4, 35.2, 44.8, 51.2, 58.3, 65.1, 71.2, 76.8, 81.5, 85.2],
+                // UC Health Element (LCWRA) - the incapacity/disability component of UC
+                // Represents extra payment for Limited Capability for Work and Work-Related Activity
+                'UC Health Element': [0, 0, 0, 0, 0.05, 0.15, 0.4, 0.9, 1.8, 3.5, 7.2, 9.8, 12.4, 15.2, 18.1, 20.8, 23.2, 25.4, 27.2],
                 'Income Support': [7.8, 7.2, 6.8, 6.4, 5.9, 5.2, 4.5, 3.8, 3.1, 2.4, 1.8, 1.3, 0.9, 0.5, 0.3, 0.2, 0.1, 0.05, 0.02],
                 'JSA (Income-Based)': [4.2, 4.8, 4.5, 3.9, 3.2, 2.6, 2.1, 1.6, 1.2, 0.9, 0.5, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01, 0, 0],
                 'ESA (Income-Based)': [5.8, 7.2, 8.4, 9.1, 9.5, 9.3, 8.8, 8.1, 7.2, 6.1, 4.8, 3.6, 2.5, 1.6, 0.9, 0.5, 0.3, 0.1, 0.05],
@@ -694,6 +697,7 @@
         // Benefit colors
         const benefitColors = {
             'Universal Credit': '#2563eb',
+            'UC Health Element': '#3b82f6',  // Lighter blue to distinguish from main UC
             'Income Support': '#7c3aed',
             'JSA (Income-Based)': '#db2777',
             'ESA (Income-Based)': '#dc2626',
@@ -712,7 +716,8 @@
             'Incapacity Total': '#7c3aed',
             'PIP/DLA': '#059669',
             'Total Disability': '#0d9488',
-            'Disability + Carers': '#0f766e'
+            'Disability + Carers': '#0f766e',
+            'All Incapacity': '#155e75'
         };
 
         // ============================================================================
@@ -822,7 +827,7 @@
                 (benefits['Universal Credit']?.[i] || 0) + (benefits['Legacy Benefits']?.[i] || 0)
             );
 
-            // Disability benefits totals
+            // Disability benefits totals (extra-costs disability benefits only)
             const disabilityBenefits = ['PIP', 'DLA', 'Attendance Allowance', 'ESA (Contributory)'];
 
             benefits['Total Disability'] = expenditureData.years.map((_, i) =>
@@ -832,6 +837,18 @@
             // Including Carer's Allowance (often grouped with disability)
             benefits['Disability + Carers'] = expenditureData.years.map((_, i) =>
                 (benefits['Total Disability']?.[i] || 0) + (benefits["Carer's Allowance"]?.[i] || 0)
+            );
+
+            // All incapacity benefits (UC Health + ESA + PIP/DLA + AA + Carers)
+            // This shows the full "health journey" spending
+            benefits['All Incapacity'] = expenditureData.years.map((_, i) =>
+                (benefits['UC Health Element']?.[i] || 0) +
+                (benefits['ESA (Income-Based)']?.[i] || 0) +
+                (benefits['ESA (Contributory)']?.[i] || 0) +
+                (benefits['PIP']?.[i] || 0) +
+                (benefits['DLA']?.[i] || 0) +
+                (benefits['Attendance Allowance']?.[i] || 0) +
+                (benefits["Carer's Allowance"]?.[i] || 0)
             );
 
             return benefits;
@@ -1057,8 +1074,17 @@
 
             const labels = expenditureData.fiscalYears.slice(startIdx, endIdx + 1);
 
-            // Disability benefits for the stacked area chart
-            const disabilityBenefits = ['PIP', 'DLA', 'Attendance Allowance', 'ESA (Contributory)', "Carer's Allowance"];
+            // All incapacity/disability benefits for the stacked area chart
+            // Includes UC Health Element (LCWRA) and both ESA types
+            const disabilityBenefits = [
+                'UC Health Element',      // UC incapacity component (LCWRA)
+                'ESA (Income-Based)',     // Legacy means-tested incapacity
+                'ESA (Contributory)',     // Contributory incapacity
+                'PIP',                    // Personal Independence Payment
+                'DLA',                    // Disability Living Allowance (legacy)
+                'Attendance Allowance',   // Pensioner disability
+                "Carer's Allowance"       // Support for carers
+            ];
 
             // Stacked Area Chart
             const areaCtx = document.getElementById('disabilityAreaChart').getContext('2d');
@@ -1136,31 +1162,38 @@
             // Update stats grid
             const latestIdx = endIdx;
             const earliestIdx = startIdx;
-            const totalDisability = benefits['Disability + Carers'][latestIdx];
-            const totalDisabilityStart = benefits['Disability + Carers'][earliestIdx];
+            const totalIncapacity = benefits['All Incapacity'][latestIdx];
+            const totalIncapacityStart = benefits['All Incapacity'][earliestIdx];
+            const ucHealthLatest = benefits['UC Health Element'][latestIdx];
             const pipLatest = benefits['PIP'][latestIdx];
-            const dlaLatest = benefits['DLA'][latestIdx];
+            const esaTotal = (benefits['ESA (Income-Based)'][latestIdx] || 0) + (benefits['ESA (Contributory)'][latestIdx] || 0);
 
             const statsGrid = document.getElementById('disabilityStatsGrid');
             const suffix = state.valueType === 'gdpShare' ? '% GDP' : '£bn';
-            const changePercent = ((totalDisability - totalDisabilityStart) / totalDisabilityStart * 100).toFixed(1);
+            const changePercent = totalIncapacityStart > 0
+                ? ((totalIncapacity - totalIncapacityStart) / totalIncapacityStart * 100).toFixed(1)
+                : 'N/A';
 
             statsGrid.innerHTML = `
                 <div class="stat-card">
-                    <div class="stat-value">${totalDisability.toFixed(1)}</div>
-                    <div class="stat-label">Total Disability + Carers (${expenditureData.fiscalYears[latestIdx]}) ${suffix}</div>
+                    <div class="stat-value">${totalIncapacity.toFixed(1)}</div>
+                    <div class="stat-label">All Incapacity (${expenditureData.fiscalYears[latestIdx]}) ${suffix}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${ucHealthLatest.toFixed(1)}</div>
+                    <div class="stat-label">UC Health Element ${suffix}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${pipLatest.toFixed(1)}</div>
                     <div class="stat-label">PIP ${suffix}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${dlaLatest.toFixed(1)}</div>
-                    <div class="stat-label">DLA ${suffix}</div>
+                    <div class="stat-value">${esaTotal.toFixed(1)}</div>
+                    <div class="stat-label">ESA (All) ${suffix}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" style="color: ${changePercent > 0 ? '#dc2626' : '#059669'}">
-                        ${changePercent > 0 ? '+' : ''}${changePercent}%
+                    <div class="stat-value" style="color: ${changePercent !== 'N/A' && parseFloat(changePercent) > 0 ? '#dc2626' : '#059669'}">
+                        ${changePercent !== 'N/A' ? (parseFloat(changePercent) > 0 ? '+' : '') + changePercent + '%' : changePercent}
                     </div>
                     <div class="stat-label">Change since ${expenditureData.fiscalYears[earliestIdx]}</div>
                 </div>
