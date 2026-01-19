@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Benefits Spending Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            color: white;
+            padding: 30px 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #f8f9fa;
+            padding: 14px 18px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-header .info-icon {
+            cursor: help;
+            opacity: 0.5;
+            font-size: 0.85rem;
+        }
+
+        .card-body {
+            padding: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #2d5a87;
+            box-shadow: 0 0 0 3px rgba(45,90,135,0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: #f0f2f5;
+        }
+
+        .checkbox-item input {
+            margin-top: 3px;
+        }
+
+        .checkbox-item .label-text {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .checkbox-item .label-desc {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: white;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #f0f2f5;
+        }
+
+        .tab-btn.active {
+            background: #2d5a87;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 450px;
+            padding: 20px;
+        }
+
+        .benefit-toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 15px 18px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .benefit-toggle {
+            padding: 6px 12px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .benefit-toggle.active {
+            border-color: var(--color);
+            background: var(--color);
+            color: white;
+        }
+
+        .range-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 6px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 18px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2d5a87;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .methodology-section {
+            padding: 20px;
+        }
+
+        .methodology-section h3 {
+            color: #2d5a87;
+            margin: 20px 0 10px 0;
+            font-size: 1.1rem;
+        }
+
+        .methodology-section h3:first-child {
+            margin-top: 0;
+        }
+
+        .methodology-section p {
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .methodology-section a {
+            color: #2d5a87;
+        }
+
+        .alert {
+            background: #e8f4fd;
+            border-left: 4px solid #2d5a87;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 18px;
+            font-size: 0.85rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .data-table th, .data-table td {
+            padding: 10px 12px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .data-table th:first-child, .data-table td:first-child {
+            text-align: left;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow: auto;
+            margin: 18px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+
+        .legend-note {
+            font-size: 0.75rem;
+            color: #666;
+            padding: 10px 18px;
+            border-top: 1px solid #eee;
+        }
+
+        .forecast-note {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #fff3cd;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>UK Benefits Spending Visualizer</h1>
+            <p>Explore government welfare spending with methodological adjustments based on Ben Baumberg Geiger's research</p>
+        </header>
+
+        <div class="layout">
+            <aside class="sidebar">
+                <div class="card">
+                    <div class="card-header">Time Period</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Start Year</label>
+                            <select id="startYear"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>End Year</label>
+                            <select id="endYear"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-item" style="margin-top: 8px;">
+                                <input type="checkbox" id="includeForecasts" checked>
+                                <div>
+                                    <div class="label-text">Include OBR Forecasts</div>
+                                    <div class="label-desc">Show projected spending to 2028-29</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        Methodology Adjustments
+                        <span class="info-icon" title="Based on Ben Baumberg Geiger's analysis">&#9432;</span>
+                    </div>
+                    <div class="card-body">
+                        <p style="font-size: 0.8rem; color: #666; margin-bottom: 12px;">
+                            These adjustments address issues identified by
+                            <a href="https://inequalities.substack.com/p/obr-new-welfare-trends-report" target="_blank">Ben Baumberg Geiger</a>
+                            regarding how UC and legacy benefits are counted differently.
+                        </p>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="adjUcCounting">
+                                <div>
+                                    <div class="label-text">Adjust UC household counting</div>
+                                    <div class="label-desc">UC counts partners; ESA counted individuals only</div>
+                                </div>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="adjLcwNoPayment">
+                                <div>
+                                    <div class="label-text">Exclude LCW 'no payment' claimants</div>
+                                    <div class="label-desc">Post-2017 claimants at unemployment rates</div>
+                                </div>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="adjSpaEffect">
+                                <div>
+                                    <div class="label-text">Remove State Pension Age effect</div>
+                                    <div class="label-desc">~330k shifted to working-age benefits</div>
+                                </div>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="adjBaseline2014">
+                                <div>
+                                    <div class="label-text">Use 2014-15 baseline</div>
+                                    <div class="label-desc">Early WCA implementation was problematic</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Display Options</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Show values as</label>
+                            <select id="valueType">
+                                <option value="nominal">£ Billions (Nominal)</option>
+                                <option value="real">£ Billions (2024 Prices)</option>
+                                <option value="gdpShare">% of GDP</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Data Source</div>
+                    <div class="card-body">
+                        <p style="font-size: 0.8rem; color: #666;">
+                            Based on <a href="https://www.gov.uk/government/collections/benefit-expenditure-tables" target="_blank">DWP Benefit Expenditure Tables</a>
+                            and <a href="https://obr.uk/wtr/welfare-trends-report-october-2024/" target="_blank">OBR Welfare Trends Report</a>.
+                        </p>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="timeSeries">Time Series</button>
+                    <button class="tab-btn" data-tab="composition">Composition</button>
+                    <button class="tab-btn" data-tab="caseload">Caseload</button>
+                    <button class="tab-btn" data-tab="data">Data Table</button>
+                    <button class="tab-btn" data-tab="methodology">Methodology</button>
+                </div>
+
+                <!-- Time Series Tab -->
+                <div id="timeSeries" class="tab-content active">
+                    <div class="card">
+                        <div class="card-header">Benefit Spending Over Time</div>
+                        <div class="benefit-toggles" id="benefitToggles"></div>
+                        <div class="chart-container">
+                            <canvas id="timeSeriesChart"></canvas>
+                        </div>
+                        <div class="legend-note">
+                            Solid markers = outturn data | Hollow markers = OBR forecasts | Dashed line = forecast boundary
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Composition Tab -->
+                <div id="composition" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            UC vs Legacy Benefits Transition
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="transitionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-header">
+                            Spending Breakdown
+                            <select id="compositionYear" style="margin-left: auto; padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd;"></select>
+                        </div>
+                        <div class="stats-grid" id="statsGrid"></div>
+                        <div class="chart-container" style="height: 350px;">
+                            <canvas id="compositionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Caseload Tab -->
+                <div id="caseload" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            Incapacity Benefits Caseload
+                            <span class="info-icon" title="Trends affected by counting methodology changes">&#9432;</span>
+                        </div>
+                        <div id="caseloadAlert" class="alert" style="display: none;"></div>
+                        <div class="chart-container">
+                            <canvas id="caseloadChart"></canvas>
+                        </div>
+                        <div class="legend-note">
+                            Note: UC caseload figures include household partners, while legacy ESA counted individuals only
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Table Tab -->
+                <div id="data" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">Raw Expenditure Data (£ Billions)</div>
+                        <div class="table-container">
+                            <table class="data-table" id="dataTable"></table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Methodology Tab -->
+                <div id="methodology" class="tab-content">
+                    <div class="card">
+                        <div class="methodology-section">
+                            <h3>Data Sources</h3>
+                            <p>
+                                This tool uses data from the
+                                <a href="https://www.gov.uk/government/collections/benefit-expenditure-tables" target="_blank">DWP Benefit Expenditure and Caseload Tables</a>,
+                                which are updated twice yearly following Spring and Autumn fiscal events.
+                            </p>
+
+                            <h3>Ben Baumberg Geiger's Methodological Considerations</h3>
+                            <p>
+                                Professor Ben Baumberg Geiger at King's College London has identified several issues with how official welfare statistics are presented.
+                                This tool implements adjustments based on his analysis.
+                            </p>
+
+                            <h3>1. UC vs Legacy Benefit Counting</h3>
+                            <p>
+                                Universal Credit counts partners in a household as separate individuals in the incapacity benefits caseload.
+                                Legacy ESA only counted individual claimants. This means UC caseloads appear artificially inflated compared to historical ESA data.
+                            </p>
+                            <p><em>Adjustment: Apply a reduction factor (0.85) to UC caseload figures.</em></p>
+
+                            <h3>2. LCW 'No Payment' Claimants</h3>
+                            <p>
+                                Since 2017, claimants with Limited Capability for Work (LCW) but not LCWRA receive no more money than unemployment benefit claimants.
+                                Including them as 'incapacity benefit' claimants is misleading.
+                            </p>
+                            <p><em>Adjustment: Exclude approximately 12% of UC incapacity caseload.</em></p>
+
+                            <h3>3. State Pension Age Effect</h3>
+                            <p>
+                                The rising State Pension Age has shifted approximately 330,000 people onto working-age benefits.
+                                This accounts for a substantial portion of the apparent caseload increase since 2008.
+                            </p>
+                            <p><em>Adjustment: Remove the estimated SPA effect from caseload trends.</em></p>
+
+                            <h3>4. Baseline Year Selection</h3>
+                            <p>
+                                The Work Capability Assessment was newly implemented in 2010-11 and was "a complete disaster" in its early years.
+                                Starting trend analysis from 2014-15 provides a more stable comparison point.
+                            </p>
+                            <p><em>Adjustment: Filter data to begin from 2014-15 rather than 2010-11.</em></p>
+
+                            <h3>Further Reading</h3>
+                            <ul style="margin-left: 20px;">
+                                <li><a href="https://inequalities.substack.com/p/obr-new-welfare-trends-report" target="_blank">On the OBR's new Welfare Trends Report</a> - Ben Baumberg Geiger</li>
+                                <li><a href="https://obr.uk/wtr/welfare-trends-report-october-2024/" target="_blank">OBR Welfare Trends Report October 2024</a></li>
+                                <li><a href="https://obr.uk/forecasts-in-depth/tax-by-tax-spend-by-spend/welfare-spending-universal-credit/" target="_blank">OBR: Welfare spending - Universal Credit</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // DATA - Based on DWP Benefit Expenditure Tables and OBR Forecasts
+        // ============================================================================
+
+        const expenditureData = {
+            years: [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028],
+            fiscalYears: ['2010-11', '2011-12', '2012-13', '2013-14', '2014-15', '2015-16', '2016-17', '2017-18', '2018-19', '2019-20', '2020-21', '2021-22', '2022-23', '2023-24', '2024-25', '2025-26', '2026-27', '2027-28', '2028-29'],
+            dataType: ['Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Forecast', 'Forecast', 'Forecast', 'Forecast'],
+
+            benefits: {
+                'Universal Credit': [0, 0, 0, 0.1, 0.5, 1.2, 2.8, 5.1, 8.9, 16.4, 35.2, 44.8, 51.2, 58.3, 65.1, 71.2, 76.8, 81.5, 85.2],
+                'Income Support': [7.8, 7.2, 6.8, 6.4, 5.9, 5.2, 4.5, 3.8, 3.1, 2.4, 1.8, 1.3, 0.9, 0.5, 0.3, 0.2, 0.1, 0.05, 0.02],
+                'JSA (Income-Based)': [4.2, 4.8, 4.5, 3.9, 3.2, 2.6, 2.1, 1.6, 1.2, 0.9, 0.5, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01, 0, 0],
+                'ESA (Income-Based)': [5.8, 7.2, 8.4, 9.1, 9.5, 9.3, 8.8, 8.1, 7.2, 6.1, 4.8, 3.6, 2.5, 1.6, 0.9, 0.5, 0.3, 0.1, 0.05],
+                'Housing Benefit': [20.8, 22.4, 23.8, 24.3, 24.2, 23.8, 23.1, 22.2, 21.1, 19.8, 16.2, 13.5, 11.2, 9.1, 7.2, 5.5, 4.2, 3.1, 2.3],
+                'Working Tax Credit': [6.2, 6.4, 6.1, 5.8, 5.4, 4.9, 4.3, 3.6, 3.0, 2.3, 1.5, 0.9, 0.5, 0.2, 0.1, 0.05, 0.02, 0, 0],
+                'Child Tax Credit': [22.1, 23.4, 23.8, 23.2, 22.4, 21.3, 19.8, 18.1, 16.2, 14.1, 10.2, 7.5, 5.2, 3.4, 2.1, 1.2, 0.6, 0.3, 0.1],
+                'PIP': [0, 0, 0, 0.8, 2.1, 4.2, 7.1, 10.3, 13.8, 17.5, 20.2, 22.8, 24.9, 27.2, 29.8, 32.1, 34.2, 36.1, 37.8],
+                'DLA': [12.4, 13.1, 13.6, 13.8, 13.2, 12.1, 10.8, 9.2, 7.5, 5.8, 4.2, 3.1, 2.3, 1.8, 1.4, 1.1, 0.8, 0.6, 0.4],
+                'Attendance Allowance': [5.1, 5.3, 5.5, 5.6, 5.7, 5.8, 5.9, 6.1, 6.3, 6.5, 6.8, 7.1, 7.4, 7.8, 8.2, 8.6, 9.0, 9.4, 9.8],
+                'ESA (Contributory)': [3.2, 3.8, 4.2, 4.5, 4.6, 4.5, 4.3, 4.1, 3.9, 3.7, 3.5, 3.4, 3.3, 3.2, 3.1, 3.0, 2.9, 2.8, 2.7],
+                "Carer's Allowance": [1.6, 1.7, 1.8, 1.9, 2.1, 2.3, 2.5, 2.8, 3.2, 3.6, 4.1, 4.5, 5.0, 5.5, 6.1, 6.6, 7.1, 7.5, 7.9],
+                'Child Benefit': [12.2, 12.1, 11.8, 11.5, 11.3, 11.4, 11.6, 11.8, 12.0, 12.2, 12.4, 12.5, 12.6, 12.8, 13.0, 13.2, 13.4, 13.6, 13.8]
+            },
+
+            gdp: [1555, 1619, 1670, 1735, 1825, 1896, 1969, 2049, 2118, 2179, 2112, 2274, 2487, 2687, 2819, 2935, 3042, 3145, 3248],
+
+            // GDP deflators for real terms calculation (2024 = 100)
+            deflators: [75.2, 77.1, 78.8, 80.5, 82.1, 82.4, 84.2, 86.5, 88.9, 90.8, 92.1, 94.8, 100.2, 105.8, 100, 102.5, 104.8, 107.1, 109.3]
+        };
+
+        const caseloadData = {
+            years: expenditureData.years,
+            fiscalYears: expenditureData.fiscalYears,
+            dataType: expenditureData.dataType,
+
+            benefits: {
+                'UC (Incapacity)': [0, 0, 0, 0.02, 0.11, 0.28, 0.52, 0.95, 1.68, 2.95, 5.82, 6.24, 6.85, 7.42, 7.89, 8.21, 8.45, 8.62, 8.75],
+                'ESA (All)': [2.31, 2.52, 2.62, 2.68, 2.71, 2.65, 2.54, 2.38, 2.18, 1.94, 1.62, 1.28, 0.95, 0.68, 0.45, 0.28, 0.16, 0.08, 0.04],
+                'Incapacity Total': [2.61, 2.64, 2.67, 2.72, 2.78, 2.82, 2.89, 2.98, 3.12, 3.28, 3.85, 4.12, 4.38, 4.65, 4.92, 5.15, 5.35, 5.52, 5.68],
+                'PIP/DLA': [3.21, 3.32, 3.41, 3.48, 3.52, 3.58, 3.68, 3.82, 4.01, 4.24, 4.52, 4.78, 5.02, 5.28, 5.55, 5.81, 6.05, 6.28, 6.48]
+            }
+        };
+
+        // Benefit colors
+        const benefitColors = {
+            'Universal Credit': '#2563eb',
+            'Income Support': '#7c3aed',
+            'JSA (Income-Based)': '#db2777',
+            'ESA (Income-Based)': '#dc2626',
+            'Housing Benefit': '#ea580c',
+            'Working Tax Credit': '#ca8a04',
+            'Child Tax Credit': '#65a30d',
+            'PIP': '#059669',
+            'DLA': '#0891b2',
+            'Attendance Allowance': '#6366f1',
+            'ESA (Contributory)': '#a855f7',
+            "Carer's Allowance": '#ec4899',
+            'Child Benefit': '#14b8a6',
+            'Legacy Benefits': '#7fcdbb',
+            'UC (Incapacity)': '#2563eb',
+            'ESA (All)': '#dc2626',
+            'Incapacity Total': '#7c3aed',
+            'PIP/DLA': '#059669'
+        };
+
+        // ============================================================================
+        // STATE
+        // ============================================================================
+
+        let state = {
+            startYear: 2010,
+            endYear: 2028,
+            includeForecasts: true,
+            valueType: 'nominal',
+            selectedBenefits: ['Universal Credit', 'Housing Benefit', 'PIP'],
+            adjustments: {
+                ucCounting: false,
+                lcwNoPayment: false,
+                spaEffect: false,
+                baseline2014: false
+            }
+        };
+
+        let charts = {};
+
+        // ============================================================================
+        // DATA PROCESSING
+        // ============================================================================
+
+        function getFilteredData() {
+            let startIdx = expenditureData.years.indexOf(state.startYear);
+            let endIdx = expenditureData.years.indexOf(state.endYear);
+
+            if (state.adjustments.baseline2014) {
+                const baseline2014Idx = expenditureData.years.indexOf(2014);
+                if (startIdx < baseline2014Idx) startIdx = baseline2014Idx;
+            }
+
+            if (!state.includeForecasts) {
+                const lastOutturnIdx = expenditureData.dataType.lastIndexOf('Outturn');
+                if (endIdx > lastOutturnIdx) endIdx = lastOutturnIdx;
+            }
+
+            return { startIdx, endIdx };
+        }
+
+        function applyAdjustments(data, type = 'expenditure') {
+            const result = JSON.parse(JSON.stringify(data));
+
+            if (state.adjustments.ucCounting && result['Universal Credit']) {
+                result['Universal Credit'] = result['Universal Credit'].map((v, i) =>
+                    expenditureData.years[i] >= 2013 ? v * 0.85 : v
+                );
+            }
+
+            if (state.adjustments.lcwNoPayment && result['Universal Credit']) {
+                result['Universal Credit'] = result['Universal Credit'].map((v, i) =>
+                    expenditureData.years[i] >= 2017 ? v * 0.88 : v
+                );
+            }
+
+            if (type === 'caseload' && state.adjustments.spaEffect && result['Incapacity Total']) {
+                result['Incapacity Total'] = result['Incapacity Total'].map((v, i) => {
+                    const year = expenditureData.years[i];
+                    if (year >= 2010 && year <= 2024) {
+                        const adjustment = 0.33 * (year - 2010) / (2024 - 2010);
+                        return Math.max(0, v - adjustment);
+                    } else if (year > 2024) {
+                        return Math.max(0, v - 0.33);
+                    }
+                    return v;
+                });
+            }
+
+            return result;
+        }
+
+        function convertValues(benefits) {
+            const result = {};
+
+            for (const [name, values] of Object.entries(benefits)) {
+                if (state.valueType === 'real') {
+                    result[name] = values.map((v, i) => v * (100 / expenditureData.deflators[i]));
+                } else if (state.valueType === 'gdpShare') {
+                    result[name] = values.map((v, i) => (v / expenditureData.gdp[i]) * 100);
+                } else {
+                    result[name] = [...values];
+                }
+            }
+
+            return result;
+        }
+
+        function calculateCombinedTotals(benefits) {
+            const legacyBenefits = ['Income Support', 'JSA (Income-Based)', 'ESA (Income-Based)',
+                                    'Housing Benefit', 'Working Tax Credit', 'Child Tax Credit'];
+
+            benefits['Legacy Benefits'] = expenditureData.years.map((_, i) =>
+                legacyBenefits.reduce((sum, b) => sum + (benefits[b]?.[i] || 0), 0)
+            );
+
+            benefits['UC + Legacy Total'] = expenditureData.years.map((_, i) =>
+                (benefits['Universal Credit']?.[i] || 0) + (benefits['Legacy Benefits']?.[i] || 0)
+            );
+
+            return benefits;
+        }
+
+        function getYAxisLabel() {
+            switch (state.valueType) {
+                case 'real': return '£ Billions (2024 Prices)';
+                case 'gdpShare': return '% of GDP';
+                default: return '£ Billions';
+            }
+        }
+
+        // ============================================================================
+        // CHARTS
+        // ============================================================================
+
+        function createTimeSeriesChart() {
+            const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+            const { startIdx, endIdx } = getFilteredData();
+
+            let benefits = applyAdjustments(expenditureData.benefits);
+            benefits = convertValues(benefits);
+            benefits = calculateCombinedTotals(benefits);
+
+            const labels = expenditureData.fiscalYears.slice(startIdx, endIdx + 1);
+            const datasets = state.selectedBenefits.map(benefit => {
+                const data = benefits[benefit]?.slice(startIdx, endIdx + 1) || [];
+                return {
+                    label: benefit,
+                    data: data,
+                    borderColor: benefitColors[benefit] || '#666',
+                    backgroundColor: benefitColors[benefit] || '#666',
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointStyle: expenditureData.dataType.slice(startIdx, endIdx + 1).map(t =>
+                        t === 'Forecast' ? 'circle' : 'circle'
+                    ),
+                    pointBackgroundColor: expenditureData.dataType.slice(startIdx, endIdx + 1).map((t, i) =>
+                        t === 'Forecast' ? 'white' : benefitColors[benefit] || '#666'
+                    ),
+                    tension: 0.1
+                };
+            });
+
+            if (charts.timeSeries) charts.timeSeries.destroy();
+
+            const forecastStartIdx = expenditureData.dataType.indexOf('Forecast') - startIdx;
+
+            charts.timeSeries = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        annotation: state.includeForecasts && forecastStartIdx > 0 ? {
+                            annotations: {
+                                forecastLine: {
+                                    type: 'line',
+                                    xMin: forecastStartIdx - 0.5,
+                                    xMax: forecastStartIdx - 0.5,
+                                    borderColor: 'rgba(0,0,0,0.3)',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5]
+                                }
+                            }
+                        } : {}
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: getYAxisLabel()
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTransitionChart() {
+            const ctx = document.getElementById('transitionChart').getContext('2d');
+            const { startIdx, endIdx } = getFilteredData();
+
+            let benefits = applyAdjustments(expenditureData.benefits);
+            benefits = convertValues(benefits);
+            benefits = calculateCombinedTotals(benefits);
+
+            const labels = expenditureData.fiscalYears.slice(startIdx, endIdx + 1);
+
+            if (charts.transition) charts.transition.destroy();
+
+            charts.transition = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Universal Credit',
+                            data: benefits['Universal Credit'].slice(startIdx, endIdx + 1),
+                            borderColor: benefitColors['Universal Credit'],
+                            backgroundColor: benefitColors['Universal Credit'] + '40',
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Legacy Benefits',
+                            data: benefits['Legacy Benefits'].slice(startIdx, endIdx + 1),
+                            borderColor: benefitColors['Legacy Benefits'],
+                            backgroundColor: benefitColors['Legacy Benefits'] + '40',
+                            fill: true,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: {
+                            display: true,
+                            text: 'UC Transition from Legacy Benefits'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: true,
+                            title: { display: true, text: getYAxisLabel() }
+                        },
+                        x: { stacked: true }
+                    }
+                }
+            });
+        }
+
+        function createCompositionChart() {
+            const ctx = document.getElementById('compositionChart').getContext('2d');
+            const yearSelect = document.getElementById('compositionYear');
+            const yearIdx = expenditureData.fiscalYears.indexOf(yearSelect.value);
+
+            let benefits = applyAdjustments(expenditureData.benefits);
+            benefits = convertValues(benefits);
+
+            const categories = {
+                'Universal Credit': benefits['Universal Credit'][yearIdx],
+                'Legacy Means-Tested': ['Income Support', 'JSA (Income-Based)', 'ESA (Income-Based)',
+                                         'Housing Benefit', 'Working Tax Credit', 'Child Tax Credit']
+                                         .reduce((sum, b) => sum + benefits[b][yearIdx], 0),
+                'Disability (PIP/DLA/AA)': benefits['PIP'][yearIdx] + benefits['DLA'][yearIdx] +
+                                           benefits['Attendance Allowance'][yearIdx],
+                'ESA (Contributory)': benefits['ESA (Contributory)'][yearIdx],
+                "Carer's Allowance": benefits["Carer's Allowance"][yearIdx],
+                'Child Benefit': benefits['Child Benefit'][yearIdx]
+            };
+
+            // Update stats grid
+            const statsGrid = document.getElementById('statsGrid');
+            const total = Object.values(categories).reduce((a, b) => a + b, 0);
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${total.toFixed(1)}</div>
+                    <div class="stat-label">Total Working-Age ${state.valueType === 'gdpShare' ? '% GDP' : '£bn'}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${categories['Universal Credit'].toFixed(1)}</div>
+                    <div class="stat-label">Universal Credit</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${categories['Disability (PIP/DLA/AA)'].toFixed(1)}</div>
+                    <div class="stat-label">Disability Benefits</div>
+                </div>
+            `;
+
+            if (charts.composition) charts.composition.destroy();
+
+            const filteredCategories = Object.fromEntries(
+                Object.entries(categories).filter(([_, v]) => v > 0.1)
+            );
+
+            charts.composition = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(filteredCategories),
+                    datasets: [{
+                        data: Object.values(filteredCategories),
+                        backgroundColor: [
+                            '#2563eb', '#7fcdbb', '#059669', '#a855f7', '#ec4899', '#14b8a6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+        }
+
+        function createCaseloadChart() {
+            const ctx = document.getElementById('caseloadChart').getContext('2d');
+            const { startIdx, endIdx } = getFilteredData();
+
+            const benefits = applyAdjustments(caseloadData.benefits, 'caseload');
+            const labels = caseloadData.fiscalYears.slice(startIdx, endIdx + 1);
+
+            // Show alert if adjustments applied
+            const alertDiv = document.getElementById('caseloadAlert');
+            const activeAdjustments = [];
+            if (state.adjustments.ucCounting) activeAdjustments.push('UC counting (factor: 0.85)');
+            if (state.adjustments.spaEffect) activeAdjustments.push('SPA effect removed');
+
+            if (activeAdjustments.length > 0) {
+                alertDiv.style.display = 'block';
+                alertDiv.innerHTML = `<strong>Adjustments applied:</strong> ${activeAdjustments.join('; ')}`;
+            } else {
+                alertDiv.style.display = 'none';
+            }
+
+            if (charts.caseload) charts.caseload.destroy();
+
+            charts.caseload = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: Object.entries(benefits).map(([name, data]) => ({
+                        label: name,
+                        data: data.slice(startIdx, endIdx + 1),
+                        borderColor: benefitColors[name] || '#666',
+                        backgroundColor: benefitColors[name] || '#666',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        tension: 0.1
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Millions of Claimants' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDataTable() {
+            const { startIdx, endIdx } = getFilteredData();
+            let benefits = applyAdjustments(expenditureData.benefits);
+            benefits = convertValues(benefits);
+
+            const benefitNames = Object.keys(benefits);
+            const table = document.getElementById('dataTable');
+
+            let html = '<thead><tr><th>Fiscal Year</th>';
+            benefitNames.forEach(name => {
+                html += `<th>${name}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            for (let i = startIdx; i <= endIdx; i++) {
+                const isForcast = expenditureData.dataType[i] === 'Forecast';
+                html += `<tr><td>${expenditureData.fiscalYears[i]}${isForcast ? '<span class="forecast-note">Forecast</span>' : ''}</td>`;
+                benefitNames.forEach(name => {
+                    html += `<td>${benefits[name][i].toFixed(2)}</td>`;
+                });
+                html += '</tr>';
+            }
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        // ============================================================================
+        // UI SETUP
+        // ============================================================================
+
+        function setupUI() {
+            // Year selectors
+            const startYearSelect = document.getElementById('startYear');
+            const endYearSelect = document.getElementById('endYear');
+            const compositionYearSelect = document.getElementById('compositionYear');
+
+            expenditureData.fiscalYears.forEach((fy, i) => {
+                const year = expenditureData.years[i];
+                startYearSelect.innerHTML += `<option value="${year}" ${year === 2010 ? 'selected' : ''}>${fy}</option>`;
+                endYearSelect.innerHTML += `<option value="${year}" ${year === 2028 ? 'selected' : ''}>${fy}</option>`;
+                compositionYearSelect.innerHTML += `<option value="${fy}" ${fy === '2024-25' ? 'selected' : ''}>${fy}</option>`;
+            });
+
+            // Benefit toggles
+            const togglesContainer = document.getElementById('benefitToggles');
+            const allBenefits = [...Object.keys(expenditureData.benefits), 'Legacy Benefits', 'UC + Legacy Total'];
+
+            allBenefits.forEach(benefit => {
+                const toggle = document.createElement('button');
+                toggle.className = `benefit-toggle ${state.selectedBenefits.includes(benefit) ? 'active' : ''}`;
+                toggle.textContent = benefit;
+                toggle.style.setProperty('--color', benefitColors[benefit] || '#666');
+                toggle.onclick = () => {
+                    if (state.selectedBenefits.includes(benefit)) {
+                        state.selectedBenefits = state.selectedBenefits.filter(b => b !== benefit);
+                        toggle.classList.remove('active');
+                    } else {
+                        state.selectedBenefits.push(benefit);
+                        toggle.classList.add('active');
+                    }
+                    updateCharts();
+                };
+                togglesContainer.appendChild(toggle);
+            });
+
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.tab).classList.add('active');
+
+                    // Update charts when switching tabs
+                    setTimeout(updateCharts, 50);
+                };
+            });
+
+            // Event listeners
+            startYearSelect.onchange = () => { state.startYear = parseInt(startYearSelect.value); updateCharts(); };
+            endYearSelect.onchange = () => { state.endYear = parseInt(endYearSelect.value); updateCharts(); };
+            compositionYearSelect.onchange = () => { createCompositionChart(); };
+
+            document.getElementById('includeForecasts').onchange = (e) => {
+                state.includeForecasts = e.target.checked;
+                updateCharts();
+            };
+            document.getElementById('valueType').onchange = (e) => {
+                state.valueType = e.target.value;
+                updateCharts();
+            };
+
+            // Adjustment checkboxes
+            document.getElementById('adjUcCounting').onchange = (e) => {
+                state.adjustments.ucCounting = e.target.checked;
+                updateCharts();
+            };
+            document.getElementById('adjLcwNoPayment').onchange = (e) => {
+                state.adjustments.lcwNoPayment = e.target.checked;
+                updateCharts();
+            };
+            document.getElementById('adjSpaEffect').onchange = (e) => {
+                state.adjustments.spaEffect = e.target.checked;
+                updateCharts();
+            };
+            document.getElementById('adjBaseline2014').onchange = (e) => {
+                state.adjustments.baseline2014 = e.target.checked;
+                if (e.target.checked && state.startYear < 2014) {
+                    state.startYear = 2014;
+                    document.getElementById('startYear').value = 2014;
+                }
+                updateCharts();
+            };
+        }
+
+        function updateCharts() {
+            createTimeSeriesChart();
+            createTransitionChart();
+            createCompositionChart();
+            createCaseloadChart();
+            createDataTable();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupUI();
+            updateCharts();
+        });
+    </script>
+</body>
+</html>
