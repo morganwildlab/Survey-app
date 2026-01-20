@@ -476,6 +476,7 @@
                     <button class="tab-btn active" data-tab="timeSeries">Time Series</button>
                     <button class="tab-btn" data-tab="composition">Composition</button>
                     <button class="tab-btn" data-tab="disability">Disability</button>
+                    <button class="tab-btn" data-tab="international">International</button>
                     <button class="tab-btn" data-tab="caseload">Caseload</button>
                     <button class="tab-btn" data-tab="data">Data Table</button>
                     <button class="tab-btn" data-tab="methodology">Methodology</button>
@@ -541,6 +542,100 @@
                         </div>
                         <div class="chart-container">
                             <canvas id="disabilityLineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- International Comparison Tab -->
+                <div id="international" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            OECD Social Spending Comparison (% of GDP)
+                            <select id="oecdSpendingYear" style="margin-left: auto; padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd;">
+                                <option value="2022">2022</option>
+                                <option value="2021">2021</option>
+                                <option value="2019">2019 (Pre-COVID)</option>
+                            </select>
+                        </div>
+                        <div class="chart-container" style="height: 450px;">
+                            <canvas id="oecdSpendingChart"></canvas>
+                        </div>
+                        <div class="legend-note">
+                            Source: OECD Social Expenditure Database (SOCX). UK highlighted in blue.
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-header">
+                            Social Spending by Category
+                            <select id="oecdCategoryCountry" style="margin-left: auto; padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd;"></select>
+                        </div>
+                        <div class="chart-container" style="height: 400px;">
+                            <canvas id="oecdCategoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-header">
+                            Labour Market Indicators
+                            <select id="labourIndicator" style="margin-left: auto; padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd;">
+                                <option value="employment">Employment Rate (%)</option>
+                                <option value="unemployment">Unemployment Rate (%)</option>
+                                <option value="inactivity">Inactivity Rate (%)</option>
+                                <option value="youthUnemployment">Youth Unemployment (%)</option>
+                                <option value="longTermUnemployment">Long-term Unemployment (%)</option>
+                                <option value="partTime">Part-time Employment (%)</option>
+                            </select>
+                        </div>
+                        <div class="chart-container" style="height: 450px;">
+                            <canvas id="labourMarketChart"></canvas>
+                        </div>
+                        <div class="legend-note">
+                            Source: OECD Labour Force Statistics. UK highlighted in blue.
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-header">UK vs Selected Countries Over Time</div>
+                        <div style="padding: 15px; display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div class="form-group" style="margin: 0; min-width: 200px;">
+                                <label>Compare UK with:</label>
+                                <select id="compareCountries" multiple style="height: 120px;">
+                                    <option value="Germany" selected>Germany</option>
+                                    <option value="France" selected>France</option>
+                                    <option value="Netherlands">Netherlands</option>
+                                    <option value="Denmark">Denmark</option>
+                                    <option value="Sweden">Sweden</option>
+                                    <option value="USA">USA</option>
+                                    <option value="Canada">Canada</option>
+                                    <option value="Australia">Australia</option>
+                                    <option value="Japan">Japan</option>
+                                    <option value="OECD Average">OECD Average</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin: 0; min-width: 200px;">
+                                <label>Indicator:</label>
+                                <select id="timeSeriesIndicator">
+                                    <option value="totalSpending">Total Social Spending (% GDP)</option>
+                                    <option value="incapacitySpending">Incapacity Spending (% GDP)</option>
+                                    <option value="unemploymentSpending">Unemployment Spending (% GDP)</option>
+                                    <option value="employment">Employment Rate (%)</option>
+                                    <option value="inactivity">Inactivity Rate (%)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container" style="height: 400px;">
+                            <canvas id="internationalTimeSeriesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-header">Incapacity/Disability Spending (% of GDP)</div>
+                        <div class="chart-container" style="height: 400px;">
+                            <canvas id="oecdIncapacityChart"></canvas>
+                        </div>
+                        <div class="legend-note">
+                            Includes spending on disability benefits, sickness benefits, and occupational injury. UK highlighted in blue.
                         </div>
                     </div>
                 </div>
@@ -692,6 +787,150 @@
                 'Incapacity Total': [2.61, 2.64, 2.67, 2.72, 2.78, 2.82, 2.89, 2.98, 3.12, 3.28, 3.85, 4.12, 4.38, 4.65, 4.92, 5.15, 5.35, 5.52, 5.68],
                 'PIP/DLA': [3.21, 3.32, 3.41, 3.48, 3.52, 3.58, 3.68, 3.82, 4.01, 4.24, 4.52, 4.78, 5.02, 5.28, 5.55, 5.81, 6.05, 6.28, 6.48]
             }
+        };
+
+        // ============================================================================
+        // OECD COMPARATIVE DATA
+        // Source: OECD Social Expenditure Database (SOCX) and Labour Force Statistics
+        // ============================================================================
+
+        const oecdData = {
+            countries: ['France', 'Italy', 'Germany', 'Sweden', 'Denmark', 'Netherlands', 'UK', 'Spain', 'Canada', 'Australia', 'USA', 'Japan', 'OECD Average'],
+
+            // Total public social spending as % of GDP
+            totalSpending: {
+                2019: [31.0, 28.2, 25.9, 25.5, 28.3, 16.7, 20.6, 24.7, 17.3, 16.7, 18.7, 22.3, 20.0],
+                2021: [32.3, 29.5, 27.6, 26.2, 28.8, 18.2, 22.8, 27.2, 22.1, 18.4, 22.5, 24.1, 21.8],
+                2022: [31.5, 28.8, 26.8, 25.8, 27.5, 17.5, 21.2, 25.8, 18.5, 17.2, 19.2, 23.5, 21.1]
+            },
+
+            // Spending by category (% of GDP) - 2022 data
+            categories: {
+                'Old Age': [13.9, 15.8, 10.2, 9.8, 11.2, 6.8, 6.5, 12.4, 5.2, 5.1, 7.0, 10.8, 8.0],
+                'Survivors': [1.6, 2.4, 1.8, 0.3, 0.0, 0.1, 0.1, 2.3, 0.4, 0.2, 0.9, 1.2, 0.9],
+                'Incapacity': [1.9, 1.6, 2.3, 3.8, 4.2, 2.8, 2.4, 2.5, 0.9, 2.2, 1.4, 1.1, 2.0],
+                'Health': [8.0, 6.3, 8.5, 6.8, 7.5, 5.2, 8.0, 6.2, 8.1, 6.9, 8.5, 8.0, 6.5],
+                'Family': [2.9, 1.8, 2.3, 3.4, 3.5, 1.3, 2.5, 1.5, 1.6, 2.2, 0.6, 2.0, 2.1],
+                'Unemployment': [1.5, 0.8, 0.8, 0.4, 1.1, 0.8, 0.2, 1.8, 0.5, 0.5, 0.2, 0.2, 0.6],
+                'Housing': [0.8, 0.0, 0.4, 0.4, 0.6, 0.3, 1.1, 0.2, 0.4, 0.4, 0.1, 0.1, 0.4],
+                'Other': [0.9, 0.1, 0.5, 0.9, 0.4, 0.2, 0.4, 0.9, 1.4, 0.2, 0.5, 0.1, 0.6]
+            },
+
+            // Incapacity-related spending (% of GDP) - detailed
+            incapacitySpending: {
+                2010: [1.8, 1.5, 2.0, 4.5, 4.8, 3.2, 2.5, 2.6, 0.8, 2.5, 1.3, 1.0, 2.1],
+                2015: [1.8, 1.5, 2.1, 4.1, 4.5, 3.0, 2.3, 2.5, 0.8, 2.4, 1.3, 1.1, 2.0],
+                2019: [1.8, 1.5, 2.2, 3.9, 4.3, 2.9, 2.3, 2.5, 0.9, 2.3, 1.4, 1.1, 2.0],
+                2021: [2.0, 1.7, 2.4, 4.0, 4.4, 3.0, 2.6, 2.6, 1.0, 2.4, 1.5, 1.2, 2.2],
+                2022: [1.9, 1.6, 2.3, 3.8, 4.2, 2.8, 2.4, 2.5, 0.9, 2.2, 1.4, 1.1, 2.0]
+            },
+
+            // Time series for key indicators (2010-2022)
+            years: [2010, 2012, 2014, 2016, 2018, 2019, 2020, 2021, 2022],
+
+            timeSeries: {
+                totalSpending: {
+                    'UK':           [22.8, 23.0, 21.5, 21.2, 20.6, 20.6, 25.8, 22.8, 21.2],
+                    'Germany':      [26.8, 25.4, 25.2, 25.3, 25.5, 25.9, 28.8, 27.6, 26.8],
+                    'France':       [31.4, 32.1, 32.2, 32.0, 31.2, 31.0, 35.1, 32.3, 31.5],
+                    'Netherlands':  [17.8, 17.6, 17.2, 16.6, 16.4, 16.7, 19.2, 18.2, 17.5],
+                    'Denmark':      [28.9, 29.5, 29.8, 28.7, 28.0, 28.3, 31.2, 28.8, 27.5],
+                    'Sweden':       [26.3, 26.8, 26.2, 26.1, 25.5, 25.5, 28.2, 26.2, 25.8],
+                    'USA':          [19.3, 18.7, 18.8, 19.0, 18.7, 18.7, 23.5, 22.5, 19.2],
+                    'Canada':       [17.5, 17.2, 17.0, 17.2, 17.2, 17.3, 24.2, 22.1, 18.5],
+                    'Australia':    [16.4, 17.3, 18.0, 17.3, 16.7, 16.7, 19.2, 18.4, 17.2],
+                    'Japan':        [22.1, 23.1, 23.1, 22.1, 21.9, 22.3, 25.2, 24.1, 23.5],
+                    'OECD Average': [20.5, 21.0, 20.8, 20.5, 20.1, 20.0, 23.2, 21.8, 21.1]
+                },
+                incapacitySpending: {
+                    'UK':           [2.5, 2.4, 2.3, 2.3, 2.3, 2.3, 2.5, 2.6, 2.4],
+                    'Germany':      [2.0, 2.0, 2.1, 2.1, 2.2, 2.2, 2.4, 2.4, 2.3],
+                    'France':       [1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 2.0, 2.0, 1.9],
+                    'Netherlands':  [3.2, 3.1, 3.0, 2.9, 2.9, 2.9, 3.0, 3.0, 2.8],
+                    'Denmark':      [4.8, 4.7, 4.6, 4.5, 4.4, 4.3, 4.5, 4.4, 4.2],
+                    'Sweden':       [4.5, 4.3, 4.1, 4.0, 3.9, 3.9, 4.0, 4.0, 3.8],
+                    'USA':          [1.3, 1.4, 1.4, 1.4, 1.4, 1.4, 1.5, 1.5, 1.4],
+                    'Canada':       [0.8, 0.8, 0.8, 0.8, 0.9, 0.9, 1.0, 1.0, 0.9],
+                    'Australia':    [2.5, 2.5, 2.4, 2.4, 2.3, 2.3, 2.4, 2.4, 2.2],
+                    'Japan':        [1.0, 1.0, 1.1, 1.1, 1.1, 1.1, 1.2, 1.2, 1.1],
+                    'OECD Average': [2.1, 2.1, 2.0, 2.0, 2.0, 2.0, 2.2, 2.2, 2.0]
+                },
+                unemploymentSpending: {
+                    'UK':           [0.4, 0.4, 0.2, 0.2, 0.2, 0.2, 0.5, 0.3, 0.2],
+                    'Germany':      [1.4, 0.9, 0.8, 0.7, 0.7, 0.8, 1.3, 1.0, 0.8],
+                    'France':       [1.6, 1.6, 1.6, 1.5, 1.5, 1.5, 2.2, 1.8, 1.5],
+                    'Netherlands':  [1.2, 1.4, 1.6, 1.2, 0.9, 0.8, 1.5, 1.1, 0.8],
+                    'Denmark':      [2.0, 1.8, 1.5, 1.2, 1.0, 1.1, 1.8, 1.4, 1.1],
+                    'Sweden':       [0.7, 0.6, 0.6, 0.5, 0.4, 0.4, 0.7, 0.5, 0.4],
+                    'USA':          [1.0, 0.5, 0.3, 0.2, 0.2, 0.2, 1.3, 0.5, 0.2],
+                    'Canada':       [1.0, 0.8, 0.6, 0.6, 0.5, 0.5, 1.8, 1.0, 0.5],
+                    'Australia':    [0.5, 0.5, 0.5, 0.5, 0.4, 0.5, 1.0, 0.7, 0.5],
+                    'Japan':        [0.4, 0.3, 0.3, 0.2, 0.2, 0.2, 0.5, 0.3, 0.2],
+                    'OECD Average': [0.9, 0.8, 0.7, 0.6, 0.5, 0.6, 1.2, 0.8, 0.6]
+                }
+            }
+        };
+
+        // Labour market statistics - OECD data
+        const labourMarketData = {
+            countries: ['France', 'Italy', 'Germany', 'Sweden', 'Denmark', 'Netherlands', 'UK', 'Spain', 'Canada', 'Australia', 'USA', 'Japan', 'OECD Average'],
+
+            // Latest available data (2023)
+            employment: [68.4, 61.5, 77.4, 78.2, 77.8, 82.0, 75.7, 65.4, 75.2, 75.8, 71.4, 78.1, 70.2],
+            unemployment: [7.3, 7.6, 3.0, 7.5, 5.1, 3.6, 4.0, 12.1, 5.4, 3.7, 3.6, 2.6, 4.9],
+            inactivity: [26.2, 33.5, 20.1, 15.4, 18.0, 14.9, 21.1, 25.5, 20.5, 21.3, 25.9, 19.8, 26.2],
+            youthUnemployment: [17.2, 22.3, 5.8, 20.1, 10.8, 8.9, 11.4, 28.5, 10.8, 8.0, 8.0, 4.2, 10.5],
+            longTermUnemployment: [2.4, 4.2, 1.0, 1.2, 0.9, 0.9, 0.9, 5.0, 0.6, 0.7, 0.5, 0.6, 1.3],
+            partTime: [17.9, 17.8, 28.4, 22.8, 22.3, 42.8, 22.5, 13.5, 18.2, 29.2, 16.9, 25.1, 16.5],
+
+            // Time series
+            years: [2010, 2012, 2014, 2016, 2018, 2019, 2020, 2021, 2022, 2023],
+
+            timeSeries: {
+                employment: {
+                    'UK':           [70.3, 70.9, 72.9, 74.5, 75.4, 75.7, 74.8, 74.4, 75.5, 75.7],
+                    'Germany':      [71.3, 73.1, 74.0, 75.5, 76.8, 77.0, 76.2, 76.0, 77.2, 77.4],
+                    'France':       [64.0, 64.0, 64.3, 64.7, 66.1, 66.6, 65.3, 67.2, 68.1, 68.4],
+                    'Netherlands':  [74.7, 75.1, 73.9, 76.1, 78.9, 80.1, 79.7, 80.1, 81.8, 82.0],
+                    'Denmark':      [73.4, 72.6, 72.8, 74.9, 76.5, 77.0, 75.6, 76.8, 77.5, 77.8],
+                    'Sweden':       [72.7, 73.8, 74.9, 76.2, 77.5, 77.1, 75.5, 76.9, 77.6, 78.2],
+                    'USA':          [66.7, 67.1, 68.1, 69.4, 70.7, 71.4, 67.1, 69.0, 71.0, 71.4],
+                    'Canada':       [71.5, 72.2, 72.3, 72.9, 74.2, 75.0, 70.8, 73.5, 75.3, 75.2],
+                    'Australia':    [72.4, 72.3, 72.0, 73.0, 74.6, 74.8, 72.8, 74.3, 75.5, 75.8],
+                    'Japan':        [70.1, 70.6, 72.7, 74.3, 77.0, 77.6, 77.3, 77.7, 78.0, 78.1],
+                    'OECD Average': [64.6, 65.1, 65.7, 67.0, 68.6, 69.0, 66.4, 68.3, 69.8, 70.2]
+                },
+                inactivity: {
+                    'UK':           [23.2, 22.9, 22.1, 21.4, 21.0, 20.8, 21.3, 21.6, 21.3, 21.1],
+                    'Germany':      [22.6, 21.3, 20.7, 19.8, 19.1, 18.9, 19.6, 19.8, 19.2, 20.1],
+                    'France':       [29.3, 28.7, 28.4, 28.1, 27.2, 26.5, 27.4, 26.2, 25.8, 26.2],
+                    'Netherlands':  [20.5, 19.7, 20.0, 18.6, 16.8, 15.7, 15.8, 15.4, 14.8, 14.9],
+                    'Denmark':      [20.5, 21.2, 20.8, 19.0, 17.5, 17.2, 18.1, 17.5, 17.3, 18.0],
+                    'Sweden':       [18.3, 17.9, 17.3, 16.6, 16.0, 16.4, 17.5, 16.6, 16.0, 15.4],
+                    'USA':          [29.1, 28.1, 27.1, 26.1, 25.5, 25.0, 29.5, 27.4, 25.8, 25.9],
+                    'Canada':       [21.8, 21.1, 21.2, 20.8, 20.0, 19.4, 22.7, 20.7, 19.6, 20.5],
+                    'Australia':    [22.5, 22.5, 22.9, 22.3, 21.0, 20.8, 22.6, 21.3, 20.6, 21.3],
+                    'Japan':        [27.0, 26.6, 24.8, 23.2, 20.9, 20.4, 20.6, 20.3, 19.9, 19.8],
+                    'OECD Average': [29.2, 28.4, 27.8, 26.9, 25.9, 25.6, 28.3, 26.5, 25.6, 26.2]
+                }
+            }
+        };
+
+        // Country colors for charts
+        const countryColors = {
+            'UK': '#2563eb',
+            'Germany': '#dc2626',
+            'France': '#7c3aed',
+            'Netherlands': '#ea580c',
+            'Denmark': '#059669',
+            'Sweden': '#0891b2',
+            'USA': '#64748b',
+            'Canada': '#be185d',
+            'Australia': '#ca8a04',
+            'Japan': '#ec4899',
+            'Italy': '#84cc16',
+            'Spain': '#f97316',
+            'OECD Average': '#6b7280'
         };
 
         // Benefit colors
@@ -1280,6 +1519,278 @@
         }
 
         // ============================================================================
+        // INTERNATIONAL COMPARISON CHARTS
+        // ============================================================================
+
+        function createInternationalCharts() {
+            createOecdSpendingChart();
+            createOecdCategoryChart();
+            createLabourMarketChart();
+            createInternationalTimeSeriesChart();
+            createOecdIncapacityChart();
+        }
+
+        function createOecdSpendingChart() {
+            const ctx = document.getElementById('oecdSpendingChart').getContext('2d');
+            const yearSelect = document.getElementById('oecdSpendingYear');
+            const year = yearSelect.value;
+
+            const data = oecdData.totalSpending[year];
+            const ukIndex = oecdData.countries.indexOf('UK');
+
+            // Sort by spending (descending)
+            const sorted = oecdData.countries.map((c, i) => ({ country: c, spending: data[i] }))
+                .sort((a, b) => b.spending - a.spending);
+
+            if (charts.oecdSpending) charts.oecdSpending.destroy();
+
+            charts.oecdSpending = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(d => d.country),
+                    datasets: [{
+                        label: `Total Social Spending ${year} (% of GDP)`,
+                        data: sorted.map(d => d.spending),
+                        backgroundColor: sorted.map(d => d.country === 'UK' ? '#2563eb' : '#94a3b8'),
+                        borderColor: sorted.map(d => d.country === 'UK' ? '#1d4ed8' : '#64748b'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: `Total Public Social Spending (${year})`
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: '% of GDP' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createOecdCategoryChart() {
+            const ctx = document.getElementById('oecdCategoryChart').getContext('2d');
+            const countrySelect = document.getElementById('oecdCategoryCountry');
+
+            // Populate country selector if empty
+            if (countrySelect.options.length === 0) {
+                oecdData.countries.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.text = c;
+                    if (c === 'UK') opt.selected = true;
+                    countrySelect.appendChild(opt);
+                });
+            }
+
+            const countryIndex = oecdData.countries.indexOf(countrySelect.value);
+            const categories = Object.keys(oecdData.categories);
+            const values = categories.map(cat => oecdData.categories[cat][countryIndex]);
+
+            const categoryColors = ['#dc2626', '#7c3aed', '#2563eb', '#059669', '#ea580c', '#ca8a04', '#0891b2', '#6b7280'];
+
+            if (charts.oecdCategory) charts.oecdCategory.destroy();
+
+            charts.oecdCategory = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: categoryColors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        title: {
+                            display: true,
+                            text: `${countrySelect.value} Social Spending by Category (2022)`
+                        }
+                    }
+                }
+            });
+        }
+
+        function createLabourMarketChart() {
+            const ctx = document.getElementById('labourMarketChart').getContext('2d');
+            const indicatorSelect = document.getElementById('labourIndicator');
+            const indicator = indicatorSelect.value;
+
+            const indicatorData = labourMarketData[indicator];
+            const ukIndex = labourMarketData.countries.indexOf('UK');
+
+            // Sort appropriately (high is good for employment, low is good for unemployment)
+            const highIsGood = ['employment'].includes(indicator);
+            const sorted = labourMarketData.countries.map((c, i) => ({ country: c, value: indicatorData[i] }))
+                .sort((a, b) => highIsGood ? b.value - a.value : a.value - b.value);
+
+            if (charts.labourMarket) charts.labourMarket.destroy();
+
+            const indicatorLabels = {
+                employment: 'Employment Rate',
+                unemployment: 'Unemployment Rate',
+                inactivity: 'Inactivity Rate',
+                youthUnemployment: 'Youth Unemployment Rate',
+                longTermUnemployment: 'Long-term Unemployment Rate',
+                partTime: 'Part-time Employment Rate'
+            };
+
+            charts.labourMarket = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(d => d.country),
+                    datasets: [{
+                        label: `${indicatorLabels[indicator]} (2023)`,
+                        data: sorted.map(d => d.value),
+                        backgroundColor: sorted.map(d => d.country === 'UK' ? '#2563eb' : '#94a3b8'),
+                        borderColor: sorted.map(d => d.country === 'UK' ? '#1d4ed8' : '#64748b'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: `${indicatorLabels[indicator]} (2023)`
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: '%' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createInternationalTimeSeriesChart() {
+            const ctx = document.getElementById('internationalTimeSeriesChart').getContext('2d');
+            const countrySelect = document.getElementById('compareCountries');
+            const indicatorSelect = document.getElementById('timeSeriesIndicator');
+
+            const selectedCountries = Array.from(countrySelect.selectedOptions).map(o => o.value);
+            const indicator = indicatorSelect.value;
+
+            // Always include UK
+            const countries = ['UK', ...selectedCountries.filter(c => c !== 'UK')];
+
+            let data, years, yLabel;
+
+            if (['totalSpending', 'incapacitySpending', 'unemploymentSpending'].includes(indicator)) {
+                data = oecdData.timeSeries[indicator];
+                years = oecdData.years;
+                yLabel = '% of GDP';
+            } else {
+                data = labourMarketData.timeSeries[indicator];
+                years = labourMarketData.years;
+                yLabel = '%';
+            }
+
+            const datasets = countries.filter(c => data[c]).map(country => ({
+                label: country,
+                data: data[country],
+                borderColor: countryColors[country] || '#666',
+                backgroundColor: countryColors[country] || '#666',
+                borderWidth: country === 'UK' ? 3 : 2,
+                pointRadius: country === 'UK' ? 4 : 3,
+                tension: 0.1
+            }));
+
+            if (charts.internationalTimeSeries) charts.internationalTimeSeries.destroy();
+
+            const indicatorLabels = {
+                totalSpending: 'Total Social Spending',
+                incapacitySpending: 'Incapacity Spending',
+                unemploymentSpending: 'Unemployment Spending',
+                employment: 'Employment Rate',
+                inactivity: 'Inactivity Rate'
+            };
+
+            charts.internationalTimeSeries = new Chart(ctx, {
+                type: 'line',
+                data: { labels: years, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: {
+                            display: true,
+                            text: indicatorLabels[indicator]
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: yLabel }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createOecdIncapacityChart() {
+            const ctx = document.getElementById('oecdIncapacityChart').getContext('2d');
+
+            const data = oecdData.incapacitySpending[2022];
+            const ukIndex = oecdData.countries.indexOf('UK');
+
+            // Sort by spending (descending)
+            const sorted = oecdData.countries.map((c, i) => ({ country: c, spending: data[i] }))
+                .sort((a, b) => b.spending - a.spending);
+
+            if (charts.oecdIncapacity) charts.oecdIncapacity.destroy();
+
+            charts.oecdIncapacity = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(d => d.country),
+                    datasets: [{
+                        label: 'Incapacity Spending 2022 (% of GDP)',
+                        data: sorted.map(d => d.spending),
+                        backgroundColor: sorted.map(d => d.country === 'UK' ? '#2563eb' : '#94a3b8'),
+                        borderColor: sorted.map(d => d.country === 'UK' ? '#1d4ed8' : '#64748b'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Incapacity/Disability Spending (2022)'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: '% of GDP' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============================================================================
         // UI SETUP
         // ============================================================================
 
@@ -1391,6 +1902,13 @@
                 }
                 updateCharts();
             };
+
+            // International comparison selectors
+            document.getElementById('oecdSpendingYear').onchange = () => createOecdSpendingChart();
+            document.getElementById('oecdCategoryCountry').onchange = () => createOecdCategoryChart();
+            document.getElementById('labourIndicator').onchange = () => createLabourMarketChart();
+            document.getElementById('compareCountries').onchange = () => createInternationalTimeSeriesChart();
+            document.getElementById('timeSeriesIndicator').onchange = () => createInternationalTimeSeriesChart();
         }
 
         function updateCharts() {
@@ -1398,6 +1916,7 @@
             createTransitionChart();
             createCompositionChart();
             createDisabilityCharts();
+            createInternationalCharts();
             createCaseloadChart();
             createDataTable();
         }
