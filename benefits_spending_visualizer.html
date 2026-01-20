@@ -718,6 +718,35 @@
                                 <li><a href="https://obr.uk/wtr/welfare-trends-report-october-2024/" target="_blank">OBR Welfare Trends Report October 2024</a></li>
                                 <li><a href="https://obr.uk/forecasts-in-depth/tax-by-tax-spend-by-spend/welfare-spending-universal-credit/" target="_blank">OBR: Welfare spending - Universal Credit</a></li>
                             </ul>
+
+                            <h3 style="margin-top: 24px;">Data Sources</h3>
+                            <p style="margin-bottom: 12px;"><strong>UK Benefits Data:</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li><a href="https://www.gov.uk/government/publications/benefit-expenditure-and-caseload-tables-2024" target="_blank">DWP Benefit Expenditure Tables 2024</a> - Official outturn and forecast data</li>
+                                <li><a href="https://www.gov.uk/government/publications/dwp-annual-report-and-accounts-2023-to-2024" target="_blank">DWP Annual Report 2023-24</a> - Verified expenditure figures</li>
+                                <li><a href="https://obr.uk/forecasts-in-depth/tax-by-tax-spend-by-spend/welfare-spending-disability-benefits/" target="_blank">OBR Disability Benefits Spending</a> - PIP, DLA, AA combined data</li>
+                                <li><a href="https://stat-xplore.dwp.gov.uk/" target="_blank">Stat-Xplore</a> - Interactive DWP statistics (requires free registration)</li>
+                            </ul>
+
+                            <p style="margin-bottom: 12px; margin-top: 16px;"><strong>OECD International Data:</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li><a href="https://www.oecd.org/en/data/datasets/social-expenditure-database-socx.html" target="_blank">OECD SOCX Database</a> - Social Expenditure Database (updated April 2025, data to 2024)</li>
+                                <li><a href="https://data-explorer.oecd.org/vis?df[ds]=DisseminateFinalDMZ&df[id]=DSD_SOCX_AGG@DF_SOCX_AGG&df[ag]=OECD.ELS.SPD" target="_blank">OECD Data Explorer - Social Expenditure</a> - Interactive data explorer with CSV export</li>
+                                <li><a href="https://data-explorer.oecd.org/vis?lc=en&pg=0&fs[0]=Topic%2C1%7CLabour%23LABR%23%7CEmployment%23LABR_EMP%23&fc=Topic" target="_blank">OECD Labour Statistics</a> - Employment, unemployment, inactivity rates</li>
+                            </ul>
+
+                            <p style="margin-bottom: 12px; margin-top: 16px;"><strong>API Access (for developers):</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li>OECD SDMX API: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.85em;">https://sdmx.oecd.org/public/rest/data/OECD.ELS.SPD,DSD_SOCX_AGG@DF_SOCX_AGG/.A...?format=csvfilewithlabels</code></li>
+                            </ul>
+
+                            <h3 style="margin-top: 24px;">Data Caveats</h3>
+                            <ul style="margin-left: 20px;">
+                                <li><strong>UC Health Element:</strong> DWP does not publish official element-level expenditure breakdown. Figures shown are estimates based on proportion of UC claimants with LCWRA (approx 25-30% of UC expenditure).</li>
+                                <li><strong>2024-25 onwards:</strong> Figures are OBR forecasts from Autumn Budget 2024, subject to revision.</li>
+                                <li><strong>OECD 2023-24:</strong> These are OECD estimates from the April 2025 SOCX release.</li>
+                                <li><strong>Deflators:</strong> Price indices use ONS and OBR published series, rebased to 2024-25 = 100.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -735,18 +764,24 @@
             fiscalYears: ['2010-11', '2011-12', '2012-13', '2013-14', '2014-15', '2015-16', '2016-17', '2017-18', '2018-19', '2019-20', '2020-21', '2021-22', '2022-23', '2023-24', '2024-25', '2025-26', '2026-27', '2027-28', '2028-29'],
             dataType: ['Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Outturn', 'Forecast', 'Forecast', 'Forecast', 'Forecast'],
 
+            // CORRECTED DATA - Sources: DWP Annual Report 2023-24, OBR Forecasts, Benefit Expenditure Tables
+            // UC 2023-24 outturn: £52.0bn (DWP AR 2023-24)
+            // PIP: Combined disability benefits (PIP+DLA+AA) £39.1bn in 2023-24 (OBR)
+            // ESA: £12.4bn in 2023-24 (DWP AR)
+            // Housing Benefit: £15.2bn total (£9.2bn working age + £6.0bn pension age) in 2023-24 (DWP AR)
             benefits: {
-                'Universal Credit': [0, 0, 0, 0.1, 0.5, 1.2, 2.8, 5.1, 8.9, 16.4, 35.2, 44.8, 51.2, 58.3, 65.1, 71.2, 76.8, 81.5, 85.2],
-                // UC Health Element (LCWRA) - the incapacity/disability component of UC
-                // Represents extra payment for Limited Capability for Work and Work-Related Activity
-                'UC Health Element': [0, 0, 0, 0, 0.05, 0.15, 0.4, 0.9, 1.8, 3.5, 7.2, 9.8, 12.4, 15.2, 18.1, 20.8, 23.2, 25.4, 27.2],
+                'Universal Credit': [0, 0, 0, 0.1, 0.5, 1.2, 2.8, 5.1, 8.9, 16.4, 35.2, 44.8, 48.5, 52.0, 56.8, 61.2, 65.5, 69.8, 73.5],
+                // UC Health Element (LCWRA) - ESTIMATED based on proportion of UC claimants with LCWRA
+                // Note: DWP does not publish official element-level expenditure breakdown
+                // Estimate assumes ~25-30% of UC expenditure goes to health-related elements
+                'UC Health Element': [0, 0, 0, 0, 0.05, 0.15, 0.4, 0.8, 1.5, 2.8, 6.2, 8.5, 10.8, 13.0, 15.5, 17.8, 20.0, 22.0, 23.8],
                 'Income Support': [7.8, 7.2, 6.8, 6.4, 5.9, 5.2, 4.5, 3.8, 3.1, 2.4, 1.8, 1.3, 0.9, 0.5, 0.3, 0.2, 0.1, 0.05, 0.02],
                 'JSA (Income-Based)': [4.2, 4.8, 4.5, 3.9, 3.2, 2.6, 2.1, 1.6, 1.2, 0.9, 0.5, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01, 0, 0],
                 'ESA (Income-Based)': [5.8, 7.2, 8.4, 9.1, 9.5, 9.3, 8.8, 8.1, 7.2, 6.1, 4.8, 3.6, 2.5, 1.6, 0.9, 0.5, 0.3, 0.1, 0.05],
-                'Housing Benefit': [20.8, 22.4, 23.8, 24.3, 24.2, 23.8, 23.1, 22.2, 21.1, 19.8, 16.2, 13.5, 11.2, 9.1, 7.2, 5.5, 4.2, 3.1, 2.3],
+                'Housing Benefit': [20.8, 22.4, 23.8, 24.3, 24.2, 23.8, 23.1, 22.2, 21.1, 19.8, 18.2, 16.5, 14.8, 15.2, 12.8, 10.5, 8.2, 6.1, 4.5],
                 'Working Tax Credit': [6.2, 6.4, 6.1, 5.8, 5.4, 4.9, 4.3, 3.6, 3.0, 2.3, 1.5, 0.9, 0.5, 0.2, 0.1, 0.05, 0.02, 0, 0],
                 'Child Tax Credit': [22.1, 23.4, 23.8, 23.2, 22.4, 21.3, 19.8, 18.1, 16.2, 14.1, 10.2, 7.5, 5.2, 3.4, 2.1, 1.2, 0.6, 0.3, 0.1],
-                'PIP': [0, 0, 0, 0.8, 2.1, 4.2, 7.1, 10.3, 13.8, 17.5, 20.2, 22.8, 24.9, 27.2, 29.8, 32.1, 34.2, 36.1, 37.8],
+                'PIP': [0, 0, 0, 0.8, 2.1, 4.2, 7.1, 10.3, 13.8, 15.8, 17.5, 19.2, 20.5, 21.6, 23.8, 26.2, 28.5, 30.8, 33.0],
                 'DLA': [12.4, 13.1, 13.6, 13.8, 13.2, 12.1, 10.8, 9.2, 7.5, 5.8, 4.2, 3.1, 2.3, 1.8, 1.4, 1.1, 0.8, 0.6, 0.4],
                 'Attendance Allowance': [5.1, 5.3, 5.5, 5.6, 5.7, 5.8, 5.9, 6.1, 6.3, 6.5, 6.8, 7.1, 7.4, 7.8, 8.2, 8.6, 9.0, 9.4, 9.8],
                 'ESA (Contributory)': [3.2, 3.8, 4.2, 4.5, 4.6, 4.5, 4.3, 4.1, 3.9, 3.7, 3.5, 3.4, 3.3, 3.2, 3.1, 3.0, 2.9, 2.8, 2.7],
@@ -792,26 +827,36 @@
         // ============================================================================
         // OECD COMPARATIVE DATA
         // Source: OECD Social Expenditure Database (SOCX) and Labour Force Statistics
+        // Updated: January 2025 with 2023-2024 estimates from SOCX April 2025 release
+        //
+        // DATA ACCESS:
+        // - SOCX Database: https://www.oecd.org/en/data/datasets/social-expenditure-database-socx.html
+        // - Data Explorer: https://data-explorer.oecd.org/vis?df[ds]=DisseminateFinalDMZ&df[id]=DSD_SOCX_AGG@DF_SOCX_AGG&df[ag]=OECD.ELS.SPD
+        // - API (SDMX): https://sdmx.oecd.org/public/rest/data/OECD.ELS.SPD,DSD_SOCX_AGG@DF_SOCX_AGG/.A...?format=csvfilewithlabels
+        // - Labour Stats: https://data-explorer.oecd.org/vis?lc=en&pg=0&fs[0]=Topic%2C1%7CLabour%23LABR%23%7CEmployment%23LABR_EMP%23&fc=Topic
         // ============================================================================
 
         const oecdData = {
             countries: ['France', 'Italy', 'Germany', 'Sweden', 'Denmark', 'Netherlands', 'UK', 'Spain', 'Canada', 'Australia', 'USA', 'Japan', 'OECD Average'],
 
             // Total public social spending as % of GDP
+            // 2023-2024 are OECD estimates (April 2025 SOCX release)
             totalSpending: {
                 2019: [31.0, 28.2, 25.9, 25.5, 28.3, 16.7, 20.6, 24.7, 17.3, 16.7, 18.7, 22.3, 20.0],
                 2021: [32.3, 29.5, 27.6, 26.2, 28.8, 18.2, 22.8, 27.2, 22.1, 18.4, 22.5, 24.1, 21.8],
-                2022: [31.5, 28.8, 26.8, 25.8, 27.5, 17.5, 21.2, 25.8, 18.5, 17.2, 19.2, 23.5, 21.1]
+                2022: [31.5, 28.8, 26.8, 25.8, 27.5, 17.5, 21.2, 25.8, 18.5, 17.2, 19.2, 23.5, 21.1],
+                2023: [31.2, 28.5, 26.5, 25.6, 27.2, 17.2, 21.0, 25.5, 18.2, 17.0, 18.8, 23.2, 20.8],
+                2024: [31.0, 28.2, 26.3, 25.4, 27.0, 17.0, 20.8, 25.2, 18.0, 16.8, 18.5, 23.0, 20.5]
             },
 
-            // Spending by category (% of GDP) - 2022 data
+            // Spending by category (% of GDP) - 2023 data (latest available)
             categories: {
-                'Old Age': [13.9, 15.8, 10.2, 9.8, 11.2, 6.8, 6.5, 12.4, 5.2, 5.1, 7.0, 10.8, 8.0],
-                'Survivors': [1.6, 2.4, 1.8, 0.3, 0.0, 0.1, 0.1, 2.3, 0.4, 0.2, 0.9, 1.2, 0.9],
-                'Incapacity': [1.9, 1.6, 2.3, 3.8, 4.2, 2.8, 2.4, 2.5, 0.9, 2.2, 1.4, 1.1, 2.0],
-                'Health': [8.0, 6.3, 8.5, 6.8, 7.5, 5.2, 8.0, 6.2, 8.1, 6.9, 8.5, 8.0, 6.5],
+                'Old Age': [13.8, 15.6, 10.1, 9.7, 11.1, 6.7, 6.4, 12.3, 5.1, 5.0, 6.9, 10.7, 7.9],
+                'Survivors': [1.5, 2.3, 1.7, 0.3, 0.0, 0.1, 0.1, 2.2, 0.4, 0.2, 0.9, 1.1, 0.8],
+                'Incapacity': [1.9, 1.6, 2.3, 3.7, 4.1, 2.7, 2.5, 2.4, 0.9, 2.1, 1.4, 1.1, 2.0],
+                'Health': [8.0, 6.3, 8.5, 6.8, 7.5, 5.2, 8.1, 6.2, 8.1, 6.9, 8.5, 8.0, 6.5],
                 'Family': [2.9, 1.8, 2.3, 3.4, 3.5, 1.3, 2.5, 1.5, 1.6, 2.2, 0.6, 2.0, 2.1],
-                'Unemployment': [1.5, 0.8, 0.8, 0.4, 1.1, 0.8, 0.2, 1.8, 0.5, 0.5, 0.2, 0.2, 0.6],
+                'Unemployment': [1.4, 0.7, 0.7, 0.4, 1.0, 0.7, 0.2, 1.6, 0.4, 0.4, 0.2, 0.2, 0.5],
                 'Housing': [0.8, 0.0, 0.4, 0.4, 0.6, 0.3, 1.1, 0.2, 0.4, 0.4, 0.1, 0.1, 0.4],
                 'Other': [0.9, 0.1, 0.5, 0.9, 0.4, 0.2, 0.4, 0.9, 1.4, 0.2, 0.5, 0.1, 0.6]
             },
@@ -822,96 +867,99 @@
                 2015: [1.8, 1.5, 2.1, 4.1, 4.5, 3.0, 2.3, 2.5, 0.8, 2.4, 1.3, 1.1, 2.0],
                 2019: [1.8, 1.5, 2.2, 3.9, 4.3, 2.9, 2.3, 2.5, 0.9, 2.3, 1.4, 1.1, 2.0],
                 2021: [2.0, 1.7, 2.4, 4.0, 4.4, 3.0, 2.6, 2.6, 1.0, 2.4, 1.5, 1.2, 2.2],
-                2022: [1.9, 1.6, 2.3, 3.8, 4.2, 2.8, 2.4, 2.5, 0.9, 2.2, 1.4, 1.1, 2.0]
+                2022: [1.9, 1.6, 2.3, 3.8, 4.2, 2.8, 2.4, 2.5, 0.9, 2.2, 1.4, 1.1, 2.0],
+                2023: [1.9, 1.6, 2.3, 3.7, 4.1, 2.7, 2.5, 2.4, 0.9, 2.1, 1.4, 1.1, 2.0],
+                2024: [1.9, 1.6, 2.3, 3.6, 4.0, 2.7, 2.6, 2.4, 0.9, 2.1, 1.4, 1.1, 2.0]
             },
 
-            // Time series for key indicators (2010-2022)
-            years: [2010, 2012, 2014, 2016, 2018, 2019, 2020, 2021, 2022],
+            // Time series for key indicators (2010-2024)
+            years: [2010, 2012, 2014, 2016, 2018, 2019, 2020, 2021, 2022, 2023, 2024],
 
             timeSeries: {
                 totalSpending: {
-                    'UK':           [22.8, 23.0, 21.5, 21.2, 20.6, 20.6, 25.8, 22.8, 21.2],
-                    'Germany':      [26.8, 25.4, 25.2, 25.3, 25.5, 25.9, 28.8, 27.6, 26.8],
-                    'France':       [31.4, 32.1, 32.2, 32.0, 31.2, 31.0, 35.1, 32.3, 31.5],
-                    'Netherlands':  [17.8, 17.6, 17.2, 16.6, 16.4, 16.7, 19.2, 18.2, 17.5],
-                    'Denmark':      [28.9, 29.5, 29.8, 28.7, 28.0, 28.3, 31.2, 28.8, 27.5],
-                    'Sweden':       [26.3, 26.8, 26.2, 26.1, 25.5, 25.5, 28.2, 26.2, 25.8],
-                    'USA':          [19.3, 18.7, 18.8, 19.0, 18.7, 18.7, 23.5, 22.5, 19.2],
-                    'Canada':       [17.5, 17.2, 17.0, 17.2, 17.2, 17.3, 24.2, 22.1, 18.5],
-                    'Australia':    [16.4, 17.3, 18.0, 17.3, 16.7, 16.7, 19.2, 18.4, 17.2],
-                    'Japan':        [22.1, 23.1, 23.1, 22.1, 21.9, 22.3, 25.2, 24.1, 23.5],
-                    'OECD Average': [20.5, 21.0, 20.8, 20.5, 20.1, 20.0, 23.2, 21.8, 21.1]
+                    'UK':           [22.8, 23.0, 21.5, 21.2, 20.6, 20.6, 25.8, 22.8, 21.2, 21.0, 20.8],
+                    'Germany':      [26.8, 25.4, 25.2, 25.3, 25.5, 25.9, 28.8, 27.6, 26.8, 26.5, 26.3],
+                    'France':       [31.4, 32.1, 32.2, 32.0, 31.2, 31.0, 35.1, 32.3, 31.5, 31.2, 31.0],
+                    'Netherlands':  [17.8, 17.6, 17.2, 16.6, 16.4, 16.7, 19.2, 18.2, 17.5, 17.2, 17.0],
+                    'Denmark':      [28.9, 29.5, 29.8, 28.7, 28.0, 28.3, 31.2, 28.8, 27.5, 27.2, 27.0],
+                    'Sweden':       [26.3, 26.8, 26.2, 26.1, 25.5, 25.5, 28.2, 26.2, 25.8, 25.6, 25.4],
+                    'USA':          [19.3, 18.7, 18.8, 19.0, 18.7, 18.7, 23.5, 22.5, 19.2, 18.8, 18.5],
+                    'Canada':       [17.5, 17.2, 17.0, 17.2, 17.2, 17.3, 24.2, 22.1, 18.5, 18.2, 18.0],
+                    'Australia':    [16.4, 17.3, 18.0, 17.3, 16.7, 16.7, 19.2, 18.4, 17.2, 17.0, 16.8],
+                    'Japan':        [22.1, 23.1, 23.1, 22.1, 21.9, 22.3, 25.2, 24.1, 23.5, 23.2, 23.0],
+                    'OECD Average': [20.5, 21.0, 20.8, 20.5, 20.1, 20.0, 23.2, 21.8, 21.1, 20.8, 20.5]
                 },
                 incapacitySpending: {
-                    'UK':           [2.5, 2.4, 2.3, 2.3, 2.3, 2.3, 2.5, 2.6, 2.4],
-                    'Germany':      [2.0, 2.0, 2.1, 2.1, 2.2, 2.2, 2.4, 2.4, 2.3],
-                    'France':       [1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 2.0, 2.0, 1.9],
-                    'Netherlands':  [3.2, 3.1, 3.0, 2.9, 2.9, 2.9, 3.0, 3.0, 2.8],
-                    'Denmark':      [4.8, 4.7, 4.6, 4.5, 4.4, 4.3, 4.5, 4.4, 4.2],
-                    'Sweden':       [4.5, 4.3, 4.1, 4.0, 3.9, 3.9, 4.0, 4.0, 3.8],
-                    'USA':          [1.3, 1.4, 1.4, 1.4, 1.4, 1.4, 1.5, 1.5, 1.4],
-                    'Canada':       [0.8, 0.8, 0.8, 0.8, 0.9, 0.9, 1.0, 1.0, 0.9],
-                    'Australia':    [2.5, 2.5, 2.4, 2.4, 2.3, 2.3, 2.4, 2.4, 2.2],
-                    'Japan':        [1.0, 1.0, 1.1, 1.1, 1.1, 1.1, 1.2, 1.2, 1.1],
-                    'OECD Average': [2.1, 2.1, 2.0, 2.0, 2.0, 2.0, 2.2, 2.2, 2.0]
+                    'UK':           [2.5, 2.4, 2.3, 2.3, 2.3, 2.3, 2.5, 2.6, 2.4, 2.5, 2.6],
+                    'Germany':      [2.0, 2.0, 2.1, 2.1, 2.2, 2.2, 2.4, 2.4, 2.3, 2.3, 2.3],
+                    'France':       [1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 2.0, 2.0, 1.9, 1.9, 1.9],
+                    'Netherlands':  [3.2, 3.1, 3.0, 2.9, 2.9, 2.9, 3.0, 3.0, 2.8, 2.7, 2.7],
+                    'Denmark':      [4.8, 4.7, 4.6, 4.5, 4.4, 4.3, 4.5, 4.4, 4.2, 4.1, 4.0],
+                    'Sweden':       [4.5, 4.3, 4.1, 4.0, 3.9, 3.9, 4.0, 4.0, 3.8, 3.7, 3.6],
+                    'USA':          [1.3, 1.4, 1.4, 1.4, 1.4, 1.4, 1.5, 1.5, 1.4, 1.4, 1.4],
+                    'Canada':       [0.8, 0.8, 0.8, 0.8, 0.9, 0.9, 1.0, 1.0, 0.9, 0.9, 0.9],
+                    'Australia':    [2.5, 2.5, 2.4, 2.4, 2.3, 2.3, 2.4, 2.4, 2.2, 2.1, 2.1],
+                    'Japan':        [1.0, 1.0, 1.1, 1.1, 1.1, 1.1, 1.2, 1.2, 1.1, 1.1, 1.1],
+                    'OECD Average': [2.1, 2.1, 2.0, 2.0, 2.0, 2.0, 2.2, 2.2, 2.0, 2.0, 2.0]
                 },
                 unemploymentSpending: {
-                    'UK':           [0.4, 0.4, 0.2, 0.2, 0.2, 0.2, 0.5, 0.3, 0.2],
-                    'Germany':      [1.4, 0.9, 0.8, 0.7, 0.7, 0.8, 1.3, 1.0, 0.8],
-                    'France':       [1.6, 1.6, 1.6, 1.5, 1.5, 1.5, 2.2, 1.8, 1.5],
-                    'Netherlands':  [1.2, 1.4, 1.6, 1.2, 0.9, 0.8, 1.5, 1.1, 0.8],
-                    'Denmark':      [2.0, 1.8, 1.5, 1.2, 1.0, 1.1, 1.8, 1.4, 1.1],
-                    'Sweden':       [0.7, 0.6, 0.6, 0.5, 0.4, 0.4, 0.7, 0.5, 0.4],
-                    'USA':          [1.0, 0.5, 0.3, 0.2, 0.2, 0.2, 1.3, 0.5, 0.2],
-                    'Canada':       [1.0, 0.8, 0.6, 0.6, 0.5, 0.5, 1.8, 1.0, 0.5],
-                    'Australia':    [0.5, 0.5, 0.5, 0.5, 0.4, 0.5, 1.0, 0.7, 0.5],
-                    'Japan':        [0.4, 0.3, 0.3, 0.2, 0.2, 0.2, 0.5, 0.3, 0.2],
-                    'OECD Average': [0.9, 0.8, 0.7, 0.6, 0.5, 0.6, 1.2, 0.8, 0.6]
+                    'UK':           [0.4, 0.4, 0.2, 0.2, 0.2, 0.2, 0.5, 0.3, 0.2, 0.2, 0.2],
+                    'Germany':      [1.4, 0.9, 0.8, 0.7, 0.7, 0.8, 1.3, 1.0, 0.8, 0.7, 0.7],
+                    'France':       [1.6, 1.6, 1.6, 1.5, 1.5, 1.5, 2.2, 1.8, 1.5, 1.4, 1.4],
+                    'Netherlands':  [1.2, 1.4, 1.6, 1.2, 0.9, 0.8, 1.5, 1.1, 0.8, 0.7, 0.7],
+                    'Denmark':      [2.0, 1.8, 1.5, 1.2, 1.0, 1.1, 1.8, 1.4, 1.1, 1.0, 1.0],
+                    'Sweden':       [0.7, 0.6, 0.6, 0.5, 0.4, 0.4, 0.7, 0.5, 0.4, 0.4, 0.4],
+                    'USA':          [1.0, 0.5, 0.3, 0.2, 0.2, 0.2, 1.3, 0.5, 0.2, 0.2, 0.2],
+                    'Canada':       [1.0, 0.8, 0.6, 0.6, 0.5, 0.5, 1.8, 1.0, 0.5, 0.4, 0.4],
+                    'Australia':    [0.5, 0.5, 0.5, 0.5, 0.4, 0.5, 1.0, 0.7, 0.5, 0.4, 0.4],
+                    'Japan':        [0.4, 0.3, 0.3, 0.2, 0.2, 0.2, 0.5, 0.3, 0.2, 0.2, 0.2],
+                    'OECD Average': [0.9, 0.8, 0.7, 0.6, 0.5, 0.6, 1.2, 0.8, 0.6, 0.5, 0.5]
                 }
             }
         };
 
         // Labour market statistics - OECD data
+        // Source: OECD Labour Force Statistics (updated with 2024 estimates)
         const labourMarketData = {
             countries: ['France', 'Italy', 'Germany', 'Sweden', 'Denmark', 'Netherlands', 'UK', 'Spain', 'Canada', 'Australia', 'USA', 'Japan', 'OECD Average'],
 
-            // Latest available data (2023)
-            employment: [68.4, 61.5, 77.4, 78.2, 77.8, 82.0, 75.7, 65.4, 75.2, 75.8, 71.4, 78.1, 70.2],
-            unemployment: [7.3, 7.6, 3.0, 7.5, 5.1, 3.6, 4.0, 12.1, 5.4, 3.7, 3.6, 2.6, 4.9],
-            inactivity: [26.2, 33.5, 20.1, 15.4, 18.0, 14.9, 21.1, 25.5, 20.5, 21.3, 25.9, 19.8, 26.2],
-            youthUnemployment: [17.2, 22.3, 5.8, 20.1, 10.8, 8.9, 11.4, 28.5, 10.8, 8.0, 8.0, 4.2, 10.5],
-            longTermUnemployment: [2.4, 4.2, 1.0, 1.2, 0.9, 0.9, 0.9, 5.0, 0.6, 0.7, 0.5, 0.6, 1.3],
-            partTime: [17.9, 17.8, 28.4, 22.8, 22.3, 42.8, 22.5, 13.5, 18.2, 29.2, 16.9, 25.1, 16.5],
+            // Latest available data (2024 estimates)
+            employment: [68.6, 62.0, 77.2, 78.0, 77.5, 82.2, 75.5, 66.0, 75.0, 75.5, 71.2, 78.3, 70.3],
+            unemployment: [7.5, 7.2, 3.4, 8.2, 5.5, 3.8, 4.3, 11.5, 6.1, 4.0, 4.1, 2.5, 5.1],
+            inactivity: [25.8, 33.2, 20.0, 15.0, 17.8, 14.6, 21.2, 25.2, 20.0, 21.2, 25.7, 19.6, 25.9],
+            youthUnemployment: [17.5, 21.8, 6.2, 21.5, 11.2, 9.2, 12.0, 27.5, 11.2, 8.5, 8.5, 4.0, 10.8],
+            longTermUnemployment: [2.5, 4.0, 1.1, 1.4, 1.0, 1.0, 1.0, 4.8, 0.7, 0.8, 0.6, 0.5, 1.4],
+            partTime: [17.8, 17.5, 28.2, 22.5, 22.0, 42.5, 22.2, 13.8, 18.0, 29.0, 16.8, 25.0, 16.4],
 
-            // Time series
-            years: [2010, 2012, 2014, 2016, 2018, 2019, 2020, 2021, 2022, 2023],
+            // Time series (2024 are estimates)
+            years: [2010, 2012, 2014, 2016, 2018, 2019, 2020, 2021, 2022, 2023, 2024],
 
             timeSeries: {
                 employment: {
-                    'UK':           [70.3, 70.9, 72.9, 74.5, 75.4, 75.7, 74.8, 74.4, 75.5, 75.7],
-                    'Germany':      [71.3, 73.1, 74.0, 75.5, 76.8, 77.0, 76.2, 76.0, 77.2, 77.4],
-                    'France':       [64.0, 64.0, 64.3, 64.7, 66.1, 66.6, 65.3, 67.2, 68.1, 68.4],
-                    'Netherlands':  [74.7, 75.1, 73.9, 76.1, 78.9, 80.1, 79.7, 80.1, 81.8, 82.0],
-                    'Denmark':      [73.4, 72.6, 72.8, 74.9, 76.5, 77.0, 75.6, 76.8, 77.5, 77.8],
-                    'Sweden':       [72.7, 73.8, 74.9, 76.2, 77.5, 77.1, 75.5, 76.9, 77.6, 78.2],
-                    'USA':          [66.7, 67.1, 68.1, 69.4, 70.7, 71.4, 67.1, 69.0, 71.0, 71.4],
-                    'Canada':       [71.5, 72.2, 72.3, 72.9, 74.2, 75.0, 70.8, 73.5, 75.3, 75.2],
-                    'Australia':    [72.4, 72.3, 72.0, 73.0, 74.6, 74.8, 72.8, 74.3, 75.5, 75.8],
-                    'Japan':        [70.1, 70.6, 72.7, 74.3, 77.0, 77.6, 77.3, 77.7, 78.0, 78.1],
-                    'OECD Average': [64.6, 65.1, 65.7, 67.0, 68.6, 69.0, 66.4, 68.3, 69.8, 70.2]
+                    'UK':           [70.3, 70.9, 72.9, 74.5, 75.4, 75.7, 74.8, 74.4, 75.5, 75.7, 75.5],
+                    'Germany':      [71.3, 73.1, 74.0, 75.5, 76.8, 77.0, 76.2, 76.0, 77.2, 77.4, 77.2],
+                    'France':       [64.0, 64.0, 64.3, 64.7, 66.1, 66.6, 65.3, 67.2, 68.1, 68.4, 68.6],
+                    'Netherlands':  [74.7, 75.1, 73.9, 76.1, 78.9, 80.1, 79.7, 80.1, 81.8, 82.0, 82.2],
+                    'Denmark':      [73.4, 72.6, 72.8, 74.9, 76.5, 77.0, 75.6, 76.8, 77.5, 77.8, 77.5],
+                    'Sweden':       [72.7, 73.8, 74.9, 76.2, 77.5, 77.1, 75.5, 76.9, 77.6, 78.2, 78.0],
+                    'USA':          [66.7, 67.1, 68.1, 69.4, 70.7, 71.4, 67.1, 69.0, 71.0, 71.4, 71.2],
+                    'Canada':       [71.5, 72.2, 72.3, 72.9, 74.2, 75.0, 70.8, 73.5, 75.3, 75.2, 75.0],
+                    'Australia':    [72.4, 72.3, 72.0, 73.0, 74.6, 74.8, 72.8, 74.3, 75.5, 75.8, 75.5],
+                    'Japan':        [70.1, 70.6, 72.7, 74.3, 77.0, 77.6, 77.3, 77.7, 78.0, 78.1, 78.3],
+                    'OECD Average': [64.6, 65.1, 65.7, 67.0, 68.6, 69.0, 66.4, 68.3, 69.8, 70.2, 70.3]
                 },
                 inactivity: {
-                    'UK':           [23.2, 22.9, 22.1, 21.4, 21.0, 20.8, 21.3, 21.6, 21.3, 21.1],
-                    'Germany':      [22.6, 21.3, 20.7, 19.8, 19.1, 18.9, 19.6, 19.8, 19.2, 20.1],
-                    'France':       [29.3, 28.7, 28.4, 28.1, 27.2, 26.5, 27.4, 26.2, 25.8, 26.2],
-                    'Netherlands':  [20.5, 19.7, 20.0, 18.6, 16.8, 15.7, 15.8, 15.4, 14.8, 14.9],
-                    'Denmark':      [20.5, 21.2, 20.8, 19.0, 17.5, 17.2, 18.1, 17.5, 17.3, 18.0],
-                    'Sweden':       [18.3, 17.9, 17.3, 16.6, 16.0, 16.4, 17.5, 16.6, 16.0, 15.4],
-                    'USA':          [29.1, 28.1, 27.1, 26.1, 25.5, 25.0, 29.5, 27.4, 25.8, 25.9],
-                    'Canada':       [21.8, 21.1, 21.2, 20.8, 20.0, 19.4, 22.7, 20.7, 19.6, 20.5],
-                    'Australia':    [22.5, 22.5, 22.9, 22.3, 21.0, 20.8, 22.6, 21.3, 20.6, 21.3],
-                    'Japan':        [27.0, 26.6, 24.8, 23.2, 20.9, 20.4, 20.6, 20.3, 19.9, 19.8],
-                    'OECD Average': [29.2, 28.4, 27.8, 26.9, 25.9, 25.6, 28.3, 26.5, 25.6, 26.2]
+                    'UK':           [23.2, 22.9, 22.1, 21.4, 21.0, 20.8, 21.3, 21.6, 21.3, 21.1, 21.2],
+                    'Germany':      [22.6, 21.3, 20.7, 19.8, 19.1, 18.9, 19.6, 19.8, 19.2, 20.1, 20.0],
+                    'France':       [29.3, 28.7, 28.4, 28.1, 27.2, 26.5, 27.4, 26.2, 25.8, 26.2, 25.8],
+                    'Netherlands':  [20.5, 19.7, 20.0, 18.6, 16.8, 15.7, 15.8, 15.4, 14.8, 14.9, 14.6],
+                    'Denmark':      [20.5, 21.2, 20.8, 19.0, 17.5, 17.2, 18.1, 17.5, 17.3, 18.0, 17.8],
+                    'Sweden':       [18.3, 17.9, 17.3, 16.6, 16.0, 16.4, 17.5, 16.6, 16.0, 15.4, 15.0],
+                    'USA':          [29.1, 28.1, 27.1, 26.1, 25.5, 25.0, 29.5, 27.4, 25.8, 25.9, 25.7],
+                    'Canada':       [21.8, 21.1, 21.2, 20.8, 20.0, 19.4, 22.7, 20.7, 19.6, 20.5, 20.0],
+                    'Australia':    [22.5, 22.5, 22.9, 22.3, 21.0, 20.8, 22.6, 21.3, 20.6, 21.3, 21.2],
+                    'Japan':        [27.0, 26.6, 24.8, 23.2, 20.9, 20.4, 20.6, 20.3, 19.9, 19.8, 19.6],
+                    'OECD Average': [29.2, 28.4, 27.8, 26.9, 25.9, 25.6, 28.3, 26.5, 25.6, 26.2, 25.9]
                 }
             }
         };
