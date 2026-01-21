@@ -846,14 +846,37 @@
 
                     <div class="card" style="margin-top: 20px;">
                         <div class="card-header">
-                            Latest Fetched Data
+                            Cross-Country Comparison
                             <span id="lastFetchTime" style="margin-left: auto; font-size: 0.8rem; color: #666;"></span>
+                        </div>
+                        <div style="padding: 12px 16px; background: #f8f9fa; border-bottom: 1px solid #e5e7eb;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                                <div>
+                                    <label style="font-size: 0.8rem; color: #666; display: block; margin-bottom: 4px;">Category</label>
+                                    <select id="liveChartCategory" onchange="updateLiveChartIndicatorOptions(); updateLiveChart();" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; min-width: 180px;">
+                                        <option value="Labour Market">Labour Market</option>
+                                        <option value="Spending (% GDP)">Spending (% GDP)</option>
+                                        <option value="Program Caseloads">Program Caseloads</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.8rem; color: #666; display: block; margin-bottom: 4px;">Indicator</label>
+                                    <select id="liveChartIndicator" onchange="updateLiveChart()" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; min-width: 220px;">
+                                        <option value="Unemployment Rate">Unemployment Rate</option>
+                                    </select>
+                                </div>
+                                <div style="margin-left: auto;">
+                                    <button onclick="fetchAllLiveData()" style="padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                        Refresh All Data
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="chart-container" style="height: 450px;">
                             <canvas id="liveDataChart"></canvas>
                         </div>
                         <div class="legend-note">
-                            Note: Browser CORS policies may block direct API calls. For full access, use server-side requests or the official data portals linked above.
+                            Note: Browser CORS policies may block direct API calls. Cached data shown where live fetch fails. Values may use different definitions across countries.
                         </div>
                     </div>
 
@@ -2576,6 +2599,55 @@
             updateLiveChart();
         }
 
+        // Update the indicator dropdown based on selected category
+        function updateLiveChartIndicatorOptions() {
+            const categorySelect = document.getElementById('liveChartCategory');
+            const indicatorSelect = document.getElementById('liveChartIndicator');
+            if (!categorySelect || !indicatorSelect) return;
+
+            const selectedCategory = categorySelect.value;
+
+            // Collect all unique indicators for the selected category across all countries
+            const indicatorSet = new Set();
+            Object.values(liveDataStore).forEach(countryData => {
+                countryData.indicators.forEach(ind => {
+                    if ((ind.category || 'General') === selectedCategory) {
+                        indicatorSet.add(ind.label);
+                    }
+                });
+            });
+
+            // Default indicators if no data loaded yet
+            if (indicatorSet.size === 0) {
+                const defaults = {
+                    'Labour Market': ['Unemployment Rate', 'Employment Rate (15-64)', 'Youth Unemployment (15-24)', 'Part-time Rate', 'NEET Rate (15-29)', 'Long-term Unemployed', 'Gender Employment Gap'],
+                    'Spending (% GDP)': ['Total Social Spending', 'Old Age & Survivors', 'Disability/Incapacity', 'Unemployment Benefits', 'Family Benefits', 'Housing Benefits', 'ALMP (Active Labour)', 'Health Spending'],
+                    'Program Caseloads': ['Unemployment Benefits', 'Disability Benefits', 'Social Assistance']
+                };
+                (defaults[selectedCategory] || []).forEach(ind => indicatorSet.add(ind));
+            }
+
+            // Sort indicators
+            const sortedIndicators = Array.from(indicatorSet).sort();
+
+            // Remember current selection if possible
+            const currentSelection = indicatorSelect.value;
+
+            // Clear and repopulate
+            indicatorSelect.innerHTML = '';
+            sortedIndicators.forEach(ind => {
+                const option = document.createElement('option');
+                option.value = ind;
+                option.textContent = ind;
+                indicatorSelect.appendChild(option);
+            });
+
+            // Restore selection if it exists in new options
+            if (sortedIndicators.includes(currentSelection)) {
+                indicatorSelect.value = currentSelection;
+            }
+        }
+
         function updateLiveChart() {
             const ctx = document.getElementById('liveDataChart');
             if (!ctx) return;
@@ -2590,34 +2662,109 @@
                 return;
             }
 
-            // Create bar chart showing latest unemployment rates
-            const labels = countries.map(c => liveDataStore[c].countryName);
-            const unemploymentData = countries.map(c => {
-                const unemp = liveDataStore[c].indicators.find(i => i.label.includes('Unemployment'));
-                return unemp ? parseFloat(unemp.value) : null;
+            // Get selected category and indicator
+            const categorySelect = document.getElementById('liveChartCategory');
+            const indicatorSelect = document.getElementById('liveChartIndicator');
+            const selectedCategory = categorySelect?.value || 'Labour Market';
+            const selectedIndicator = indicatorSelect?.value || 'Unemployment Rate';
+
+            // Parse value - handle percentages, millions, thousands, etc.
+            function parseValue(valueStr) {
+                if (!valueStr || valueStr === 'N/A') return null;
+                // Remove % and parse
+                let val = valueStr.replace('%', '').replace('pp', '').replace('hrs', '').replace('k', '000').replace('m', '000000').replace(/,/g, '');
+                // Handle values like "+256k"
+                val = val.replace('+', '');
+                const parsed = parseFloat(val);
+                return isNaN(parsed) ? null : parsed;
+            }
+
+            // Get unit suffix for display
+            function getUnit(indicator) {
+                if (indicator.includes('Rate') || indicator.includes('Gap') || indicator.includes('Spending') || indicator.includes('%')) return '%';
+                if (indicator.includes('Hours')) return ' hrs';
+                return '';
+            }
+
+            // Collect data for selected indicator
+            const chartData = [];
+            countries.forEach(c => {
+                const countryData = liveDataStore[c];
+                // Find indicator matching both category and label (with some fuzzy matching)
+                const ind = countryData.indicators.find(i => {
+                    const matchesCategory = (i.category || 'General') === selectedCategory;
+                    const matchesLabel = i.label === selectedIndicator ||
+                                         i.label.includes(selectedIndicator) ||
+                                         selectedIndicator.includes(i.label.split(' ')[0]);
+                    return matchesCategory && matchesLabel;
+                });
+
+                if (ind) {
+                    chartData.push({
+                        country: countryData.countryName,
+                        value: parseValue(ind.value),
+                        rawValue: ind.value,
+                        period: ind.period,
+                        color: countryColors[countryData.countryName] || '#6b7280'
+                    });
+                }
             });
+
+            // Sort by value descending for better visualization
+            chartData.sort((a, b) => (b.value || 0) - (a.value || 0));
+
+            const labels = chartData.map(d => d.country);
+            const values = chartData.map(d => d.value);
+            const colors = chartData.map(d => d.color);
+            const unit = getUnit(selectedIndicator);
 
             liveDataChart = new Chart(ctx.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Unemployment Rate (%)',
-                        data: unemploymentData,
-                        backgroundColor: countries.map(c => countryColors[liveDataStore[c].countryName] || '#6b7280'),
-                        borderColor: countries.map(c => countryColors[liveDataStore[c].countryName] || '#6b7280'),
-                        borderWidth: 1
+                        label: selectedIndicator,
+                        data: values,
+                        backgroundColor: colors.map(c => c + 'cc'),
+                        borderColor: colors,
+                        borderWidth: 2
                     }]
                 },
                 options: {
+                    indexAxis: chartData.length > 6 ? 'y' : 'x', // Horizontal bars if many countries
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        title: { display: true, text: 'Latest Unemployment Rates from National Statistics Offices' }
+                        title: {
+                            display: true,
+                            text: `${selectedIndicator} - Cross-Country Comparison`,
+                            font: { size: 14 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const dataPoint = chartData[context.dataIndex];
+                                    return `${dataPoint.rawValue} (${dataPoint.period || 'Latest'})`;
+                                }
+                            }
+                        }
                     },
                     scales: {
-                        y: { beginAtZero: true, title: { display: true, text: '%' } }
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: chartData.length <= 6,
+                                text: unit ? `Value (${unit})` : 'Value'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: chartData.length > 6,
+                                text: unit ? `Value (${unit})` : 'Value'
+                            }
+                        }
                     }
                 }
             });
@@ -3129,6 +3276,9 @@
                 fetchDST(),
                 fetchEStat()
             ]);
+
+            // Update indicator dropdown with available indicators from fetched data
+            updateLiveChartIndicatorOptions();
         }
 
         // OECD fetch (legacy)
@@ -3146,6 +3296,25 @@
             const fetchAllBtn = document.getElementById('fetchAllLiveData');
             if (fetchAllBtn) {
                 fetchAllBtn.onclick = fetchAllLiveData;
+            }
+
+            // Initialize Live Data tab indicator dropdown
+            updateLiveChartIndicatorOptions();
+
+            // Auto-fetch all data when Live Data tab is first shown
+            let liveDataLoaded = false;
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.target.id === 'live' && mutation.target.style.display !== 'none' && !liveDataLoaded) {
+                        liveDataLoaded = true;
+                        fetchAllLiveData();
+                    }
+                });
+            });
+
+            const liveTab = document.getElementById('live');
+            if (liveTab) {
+                observer.observe(liveTab, { attributes: true, attributeFilter: ['style'] });
             }
         });
     </script>
