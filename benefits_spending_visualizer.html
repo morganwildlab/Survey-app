@@ -2515,30 +2515,60 @@
             // Update timestamp
             timeSpan.textContent = `Last updated: ${new Date().toLocaleString()}`;
 
+            // Group indicators by category
+            const categories = {};
+            data.indicators.forEach(ind => {
+                const cat = ind.category || 'General';
+                if (!categories[cat]) categories[cat] = [];
+                categories[cat].push(ind);
+            });
+
             // Create or update country card
             let card = document.getElementById(`live-${country}`);
             if (!card) {
                 card = document.createElement('div');
                 card.id = `live-${country}`;
-                card.style.cssText = 'background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;';
+                card.style.cssText = 'background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px;';
                 resultsDiv.appendChild(card);
             }
 
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <strong style="font-size: 1.1rem;">${data.countryName}</strong>
-                    <span style="font-size: 0.75rem; color: #666;">${data.source}</span>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    ${data.indicators.map(ind => `
-                        <div style="background: #f8f9fa; padding: 10px; border-radius: 6px;">
-                            <div style="font-size: 0.75rem; color: #666;">${ind.label}</div>
-                            <div style="font-size: 1.3rem; font-weight: 600; color: ${ind.color || '#333'};">${ind.value}</div>
-                            <div style="font-size: 0.7rem; color: #999;">${ind.period || 'Latest'}</div>
+            // Category colors
+            const categoryStyles = {
+                'Labour Market': { bg: '#eff6ff', border: '#bfdbfe', header: '#1e40af' },
+                'Spending (% GDP)': { bg: '#f0fdf4', border: '#bbf7d0', header: '#166534' },
+                'Program Caseloads': { bg: '#faf5ff', border: '#e9d5ff', header: '#7c3aed' },
+                'Benefit Caseloads': { bg: '#faf5ff', border: '#e9d5ff', header: '#7c3aed' },
+                'General': { bg: '#f8f9fa', border: '#e5e7eb', header: '#374151' }
+            };
+
+            let categoriesHtml = '';
+            for (const [catName, indicators] of Object.entries(categories)) {
+                const style = categoryStyles[catName] || categoryStyles['General'];
+                categoriesHtml += `
+                    <div style="margin-bottom: 16px; border: 1px solid ${style.border}; border-radius: 8px; overflow: hidden;">
+                        <div style="background: ${style.bg}; padding: 8px 12px; border-bottom: 1px solid ${style.border};">
+                            <strong style="color: ${style.header}; font-size: 0.85rem;">${catName}</strong>
                         </div>
-                    `).join('')}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; padding: 12px;">
+                            ${indicators.map(ind => `
+                                <div style="background: ${style.bg}; padding: 8px; border-radius: 6px;">
+                                    <div style="font-size: 0.7rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${ind.label}">${ind.label}</div>
+                                    <div style="font-size: 1.1rem; font-weight: 600; color: ${ind.color || '#333'};">${ind.value}</div>
+                                    <div style="font-size: 0.65rem; color: #999;">${ind.period || 'Latest'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">
+                    <strong style="font-size: 1.2rem;">${data.countryName}</strong>
+                    <span style="font-size: 0.75rem; color: #666; background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">${data.source}</span>
                 </div>
-                ${data.error ? `<div style="color: #dc2626; font-size: 0.8rem; margin-top: 8px;">${data.error}</div>` : ''}
+                ${categoriesHtml}
+                ${data.error ? `<div style="color: #dc2626; font-size: 0.8rem; margin-top: 8px; padding: 8px; background: #fef2f2; border-radius: 4px;">${data.error}</div>` : ''}
             `;
 
             // Store for chart
@@ -2611,15 +2641,40 @@
                     ]
                 });
             } catch (error) {
-                // Fallback to cached/known recent data
+                // Fallback to cached/known recent data - comprehensive UK statistics
                 updateLiveDataDisplay('UK', {
                     countryName: 'United Kingdom',
-                    source: 'ONS (cached)',
+                    source: 'ONS / DWP (cached)',
                     indicators: [
-                        { label: 'Unemployment Rate', value: '4.3%', period: 'Nov 2025', color: '#2563eb' },
-                        { label: 'Employment Rate', value: '75.1%', period: 'Nov 2025' },
-                        { label: 'Inactivity Rate', value: '21.6%', period: 'Nov 2025' },
-                        { label: 'Claimant Count', value: '1.76m', period: 'Dec 2025' }
+                        // Labour Market - Core
+                        { label: 'Unemployment Rate', value: '4.3%', period: 'Nov 2025', color: '#2563eb', category: 'Labour Market' },
+                        { label: 'Employment Rate (16-64)', value: '75.1%', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Inactivity Rate', value: '21.6%', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Claimant Count', value: '1.76m', period: 'Dec 2025', category: 'Labour Market' },
+                        // Labour Market - Detailed
+                        { label: 'Youth Unemployment (16-24)', value: '12.8%', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Long-term Unemployed (12m+)', value: '1.1%', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Part-time Rate', value: '23.2%', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Zero-hours Contracts', value: '1.03m', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Underemployment Rate', value: '6.8%', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Vacancy Rate', value: '2.5%', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Avg Weekly Hours', value: '31.9hrs', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Gender Employment Gap', value: '8.6pp', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'NEET Rate (16-24)', value: '11.9%', period: 'Q3 2025', category: 'Labour Market' },
+                        // Benefits Spending (% GDP) - OECD SOCX / DWP data
+                        { label: 'Total Social Spending', value: '23.7%', period: '2023-24', color: '#16a34a', category: 'Spending (% GDP)' },
+                        { label: 'Old Age & Survivors', value: '12.1%', period: '2023-24', category: 'Spending (% GDP)' },
+                        { label: 'Disability/Incapacity', value: '2.4%', period: '2023-24', category: 'Spending (% GDP)' },
+                        { label: 'Unemployment Benefits', value: '0.2%', period: '2023-24', category: 'Spending (% GDP)' },
+                        { label: 'Family Benefits', value: '2.1%', period: '2023-24', category: 'Spending (% GDP)' },
+                        { label: 'Housing Benefits', value: '1.3%', period: '2023-24', category: 'Spending (% GDP)' },
+                        { label: 'ALMP (Active Labour)', value: '0.3%', period: '2023-24', category: 'Spending (% GDP)' },
+                        { label: 'Health Spending', value: '7.6%', period: '2023-24', category: 'Spending (% GDP)' },
+                        // Caseloads
+                        { label: 'Universal Credit', value: '6.4m', period: 'Nov 2025', color: '#9333ea', category: 'Benefit Caseloads' },
+                        { label: 'PIP Claimants', value: '3.6m', period: 'Nov 2025', category: 'Benefit Caseloads' },
+                        { label: 'State Pension', value: '12.7m', period: 'Nov 2025', category: 'Benefit Caseloads' },
+                        { label: 'Child Benefit', value: '7.0m families', period: 'Aug 2025', category: 'Benefit Caseloads' }
                     ],
                     error: 'Using cached data (CORS blocked)'
                 });
@@ -2653,11 +2708,39 @@
             } catch (error) {
                 updateLiveDataDisplay('US', {
                     countryName: 'United States',
-                    source: 'BLS (cached)',
+                    source: 'BLS / Census (cached)',
                     indicators: [
-                        { label: 'Unemployment Rate', value: '4.1%', period: 'Dec 2025', color: '#dc2626' },
-                        { label: 'Nonfarm Payrolls', value: '+256k', period: 'Dec 2025' },
-                        { label: 'Labor Force Part.', value: '62.5%', period: 'Dec 2025' }
+                        // Labour Market - Core
+                        { label: 'Unemployment Rate (U-3)', value: '4.1%', period: 'Dec 2025', color: '#dc2626', category: 'Labour Market' },
+                        { label: 'U-6 Underemployment', value: '7.5%', period: 'Dec 2025', category: 'Labour Market' },
+                        { label: 'Employment-Pop Ratio', value: '60.0%', period: 'Dec 2025', category: 'Labour Market' },
+                        { label: 'Labor Force Part.', value: '62.5%', period: 'Dec 2025', category: 'Labour Market' },
+                        { label: 'Nonfarm Payrolls', value: '+256k', period: 'Dec 2025', category: 'Labour Market' },
+                        // Labour Market - Detailed
+                        { label: 'Youth Unemployment (16-24)', value: '9.1%', period: 'Dec 2025', category: 'Labour Market' },
+                        { label: 'Long-term Unemp (27+ wks)', value: '1.0%', period: 'Dec 2025', category: 'Labour Market' },
+                        { label: 'Part-time for Econ Reasons', value: '4.3m', period: 'Dec 2025', category: 'Labour Market' },
+                        { label: 'NEET Rate (16-24)', value: '11.2%', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Job Openings (JOLTS)', value: '8.1m', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Quits Rate', value: '2.1%', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Avg Weekly Hours', value: '34.3hrs', period: 'Dec 2025', category: 'Labour Market' },
+                        { label: 'Gender Employment Gap', value: '10.8pp', period: 'Dec 2025', category: 'Labour Market' },
+                        { label: 'Prime-Age (25-54) LFPR', value: '83.4%', period: 'Dec 2025', category: 'Labour Market' },
+                        // Benefits Spending (% GDP) - OECD SOCX data
+                        { label: 'Total Social Spending', value: '22.7%', period: '2023', color: '#16a34a', category: 'Spending (% GDP)' },
+                        { label: 'Old Age & Survivors', value: '7.5%', period: '2023', category: 'Spending (% GDP)' },
+                        { label: 'Disability/Incapacity', value: '1.4%', period: '2023', category: 'Spending (% GDP)' },
+                        { label: 'Unemployment Benefits', value: '0.2%', period: '2023', category: 'Spending (% GDP)' },
+                        { label: 'Family Benefits', value: '0.6%', period: '2023', category: 'Spending (% GDP)' },
+                        { label: 'Housing Benefits', value: '0.2%', period: '2023', category: 'Spending (% GDP)' },
+                        { label: 'ALMP (Active Labour)', value: '0.1%', period: '2023', category: 'Spending (% GDP)' },
+                        { label: 'Health Spending', value: '12.4%', period: '2023', category: 'Spending (% GDP)' },
+                        // Program Caseloads
+                        { label: 'SNAP Recipients', value: '42.1m', period: 'Sep 2025', color: '#9333ea', category: 'Program Caseloads' },
+                        { label: 'Medicaid Enrollment', value: '79.4m', period: 'Oct 2025', category: 'Program Caseloads' },
+                        { label: 'SSDI Recipients', value: '8.6m', period: 'Nov 2025', category: 'Program Caseloads' },
+                        { label: 'SSI Recipients', value: '7.4m', period: 'Nov 2025', category: 'Program Caseloads' },
+                        { label: 'Unemployment Claims', value: '219k/wk', period: 'Jan 2026', category: 'Program Caseloads' }
                     ],
                     error: 'Using cached data (CORS blocked)'
                 });
@@ -2683,8 +2766,29 @@
                     countryName: 'Euro Area (20)',
                     source: 'Eurostat (cached)',
                     indicators: [
-                        { label: 'Unemployment Rate', value: '6.3%', period: 'Nov 2025', color: '#7c3aed' },
-                        { label: 'Youth Unemployment', value: '14.2%', period: 'Nov 2025' }
+                        // Labour Market - Core
+                        { label: 'Unemployment Rate', value: '6.3%', period: 'Nov 2025', color: '#7c3aed', category: 'Labour Market' },
+                        { label: 'Employment Rate (20-64)', value: '75.5%', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Activity Rate (15-64)', value: '74.8%', period: 'Q3 2025', category: 'Labour Market' },
+                        // Labour Market - Detailed
+                        { label: 'Youth Unemployment (15-24)', value: '14.2%', period: 'Nov 2025', category: 'Labour Market' },
+                        { label: 'Long-term Unemp Rate', value: '2.5%', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Part-time Employment', value: '18.5%', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Temp Contracts', value: '13.8%', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'NEET Rate (15-29)', value: '11.2%', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Job Vacancy Rate', value: '2.5%', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Avg Weekly Hours', value: '36.2hrs', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Gender Employment Gap', value: '9.8pp', period: 'Q3 2025', category: 'Labour Market' },
+                        { label: 'Involuntary Part-time', value: '4.5%', period: 'Q3 2025', category: 'Labour Market' },
+                        // Benefits Spending (% GDP) - EU average
+                        { label: 'Total Social Protection', value: '27.8%', period: '2022', color: '#16a34a', category: 'Spending (% GDP)' },
+                        { label: 'Old Age & Survivors', value: '12.9%', period: '2022', category: 'Spending (% GDP)' },
+                        { label: 'Sickness/Healthcare', value: '8.2%', period: '2022', category: 'Spending (% GDP)' },
+                        { label: 'Disability', value: '2.0%', period: '2022', category: 'Spending (% GDP)' },
+                        { label: 'Unemployment', value: '1.2%', period: '2022', category: 'Spending (% GDP)' },
+                        { label: 'Family/Children', value: '2.4%', period: '2022', category: 'Spending (% GDP)' },
+                        { label: 'Housing', value: '0.4%', period: '2022', category: 'Spending (% GDP)' },
+                        { label: 'Social Exclusion', value: '0.6%', period: '2022', category: 'Spending (% GDP)' }
                     ],
                     error: 'Using cached data (CORS blocked)'
                 });
@@ -2695,11 +2799,36 @@
         async function fetchDestatis() {
             updateLiveDataDisplay('DE', {
                 countryName: 'Germany',
-                source: 'Destatis (cached)',
+                source: 'Destatis / BA (cached)',
                 indicators: [
-                    { label: 'Unemployment Rate', value: '6.1%', period: 'Dec 2025', color: '#ea580c' },
-                    { label: 'Employment', value: '46.0m', period: 'Nov 2025' },
-                    { label: 'Vacancies', value: '702k', period: 'Q3 2025' }
+                    // Labour Market - Core
+                    { label: 'Unemployment Rate (ILO)', value: '3.4%', period: 'Nov 2025', color: '#ea580c', category: 'Labour Market' },
+                    { label: 'Unemployment Rate (BA)', value: '6.1%', period: 'Dec 2025', category: 'Labour Market' },
+                    { label: 'Employment (15-64)', value: '77.4%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Employment Total', value: '46.0m', period: 'Nov 2025', category: 'Labour Market' },
+                    // Labour Market - Detailed
+                    { label: 'Youth Unemployment (15-24)', value: '6.1%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Long-term Unemployed', value: '1.0%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Part-time Rate', value: '28.5%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Mini-jobs', value: '7.4m', period: 'Sep 2025', category: 'Labour Market' },
+                    { label: 'NEET Rate (15-29)', value: '8.6%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Job Vacancies', value: '702k', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Avg Weekly Hours', value: '34.7hrs', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Gender Employment Gap', value: '7.8pp', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Kurzarbeit (Short-time)', value: '156k', period: 'Oct 2025', category: 'Labour Market' },
+                    // Benefits Spending (% GDP) - OECD SOCX
+                    { label: 'Total Social Spending', value: '26.7%', period: '2023', color: '#16a34a', category: 'Spending (% GDP)' },
+                    { label: 'Old Age & Survivors', value: '10.2%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Disability/Incapacity', value: '2.3%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Unemployment Benefits', value: '0.8%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Family Benefits', value: '2.1%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Housing Benefits', value: '0.5%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'ALMP (Active Labour)', value: '0.6%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Health Spending', value: '10.9%', period: '2023', category: 'Spending (% GDP)' },
+                    // Program Caseloads
+                    { label: 'ALG I Recipients', value: '765k', period: 'Nov 2025', color: '#9333ea', category: 'Program Caseloads' },
+                    { label: 'Brgergeld (ALG II)', value: '5.5m', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Kindergeld Recipients', value: '9.0m children', period: 'Dec 2025', category: 'Program Caseloads' }
                 ],
                 error: 'GENESIS API requires authentication'
             });
@@ -2709,11 +2838,36 @@
         async function fetchINSEE() {
             updateLiveDataDisplay('FR', {
                 countryName: 'France',
-                source: 'INSEE (cached)',
+                source: 'INSEE / DARES (cached)',
                 indicators: [
-                    { label: 'Unemployment Rate', value: '7.4%', period: 'Q3 2025', color: '#059669' },
-                    { label: 'Employment Rate', value: '68.6%', period: 'Q3 2025' },
-                    { label: 'Youth Unemp. (15-24)', value: '17.5%', period: 'Q3 2025' }
+                    // Labour Market - Core
+                    { label: 'Unemployment Rate', value: '7.4%', period: 'Q3 2025', color: '#059669', category: 'Labour Market' },
+                    { label: 'Employment Rate (15-64)', value: '68.6%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Activity Rate', value: '73.9%', period: 'Q3 2025', category: 'Labour Market' },
+                    // Labour Market - Detailed
+                    { label: 'Youth Unemp. (15-24)', value: '17.5%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Long-term Unemployed', value: '2.4%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Part-time Rate', value: '17.3%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'CDD (Fixed-term)', value: '12.1%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'NEET Rate (15-29)', value: '12.0%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Job Vacancy Rate', value: '2.1%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Avg Weekly Hours', value: '35.9hrs', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Gender Employment Gap', value: '6.5pp', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Halo of Unemployment', value: '1.9m', period: 'Q3 2025', category: 'Labour Market' },
+                    // Benefits Spending (% GDP) - OECD SOCX
+                    { label: 'Total Social Spending', value: '31.5%', period: '2023', color: '#16a34a', category: 'Spending (% GDP)' },
+                    { label: 'Old Age & Survivors', value: '13.9%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Disability/Incapacity', value: '1.9%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Unemployment Benefits', value: '1.5%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Family Benefits', value: '2.8%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Housing Benefits', value: '0.7%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'ALMP (Active Labour)', value: '0.8%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Health Spending', value: '9.3%', period: '2023', category: 'Spending (% GDP)' },
+                    // Program Caseloads
+                    { label: 'RSA Recipients', value: '1.9m households', period: 'Sep 2025', color: '#9333ea', category: 'Program Caseloads' },
+                    { label: 'AAH Recipients', value: '1.3m', period: 'Sep 2025', category: 'Program Caseloads' },
+                    { label: 'France Travail Jobseekers', value: '5.4m (Cat A-E)', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'APL Housing Benefit', value: '6.3m households', period: '2025', category: 'Program Caseloads' }
                 ],
                 error: 'INSEE API requires registration'
             });
@@ -2725,9 +2879,35 @@
                 countryName: 'Canada',
                 source: 'Statistics Canada (cached)',
                 indicators: [
-                    { label: 'Unemployment Rate', value: '6.7%', period: 'Dec 2025', color: '#be185d' },
-                    { label: 'Employment', value: '20.6m', period: 'Dec 2025' },
-                    { label: 'Participation Rate', value: '65.1%', period: 'Dec 2025' }
+                    // Labour Market - Core
+                    { label: 'Unemployment Rate', value: '6.7%', period: 'Dec 2025', color: '#be185d', category: 'Labour Market' },
+                    { label: 'Employment Rate (15-64)', value: '74.2%', period: 'Dec 2025', category: 'Labour Market' },
+                    { label: 'Participation Rate', value: '65.1%', period: 'Dec 2025', category: 'Labour Market' },
+                    { label: 'Employment Total', value: '20.6m', period: 'Dec 2025', category: 'Labour Market' },
+                    // Labour Market - Detailed
+                    { label: 'Youth Unemployment (15-24)', value: '13.2%', period: 'Dec 2025', category: 'Labour Market' },
+                    { label: 'Long-term Unemployed', value: '1.2%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Part-time Rate', value: '18.5%', period: 'Dec 2025', category: 'Labour Market' },
+                    { label: 'Involuntary Part-time', value: '4.8%', period: 'Dec 2025', category: 'Labour Market' },
+                    { label: 'NEET Rate (15-29)', value: '10.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Job Vacancy Rate', value: '3.4%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Avg Weekly Hours', value: '32.8hrs', period: 'Dec 2025', category: 'Labour Market' },
+                    { label: 'Gender Employment Gap', value: '7.1pp', period: 'Dec 2025', category: 'Labour Market' },
+                    { label: 'Temporary Employment', value: '11.2%', period: 'Dec 2025', category: 'Labour Market' },
+                    // Benefits Spending (% GDP) - OECD SOCX
+                    { label: 'Total Social Spending', value: '22.4%', period: '2023', color: '#16a34a', category: 'Spending (% GDP)' },
+                    { label: 'Old Age & Survivors', value: '5.5%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Disability/Incapacity', value: '0.9%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Unemployment Benefits (EI)', value: '0.5%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Family Benefits', value: '1.5%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Housing Benefits', value: '0.3%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'ALMP (Active Labour)', value: '0.2%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Health Spending', value: '12.9%', period: '2023', category: 'Spending (% GDP)' },
+                    // Program Caseloads
+                    { label: 'EI Beneficiaries', value: '508k', period: 'Nov 2025', color: '#9333ea', category: 'Program Caseloads' },
+                    { label: 'Canada Child Benefit', value: '3.5m families', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'CPP/QPP Recipients', value: '7.0m', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Social Assistance', value: '1.8m', period: 'Q3 2025', category: 'Program Caseloads' }
                 ],
                 error: 'Using cached LFS data'
             });
@@ -2737,11 +2917,38 @@
         async function fetchABS() {
             updateLiveDataDisplay('AU', {
                 countryName: 'Australia',
-                source: 'ABS (cached)',
+                source: 'ABS / DSS (cached)',
                 indicators: [
-                    { label: 'Unemployment Rate', value: '4.0%', period: 'Nov 2025', color: '#ca8a04' },
-                    { label: 'Employment', value: '14.5m', period: 'Nov 2025' },
-                    { label: 'Participation Rate', value: '67.0%', period: 'Nov 2025' }
+                    // Labour Market - Core
+                    { label: 'Unemployment Rate', value: '4.0%', period: 'Nov 2025', color: '#ca8a04', category: 'Labour Market' },
+                    { label: 'Employment Rate (15-64)', value: '76.5%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Participation Rate', value: '67.0%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Employment Total', value: '14.5m', period: 'Nov 2025', category: 'Labour Market' },
+                    // Labour Market - Detailed
+                    { label: 'Youth Unemployment (15-24)', value: '9.5%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Long-term Unemployed', value: '0.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Part-time Rate', value: '30.1%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Underemployment Rate', value: '6.2%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Underutilisation Rate', value: '10.2%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'NEET Rate (15-29)', value: '9.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Job Vacancy Rate', value: '2.4%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Avg Weekly Hours', value: '32.3hrs', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Gender Employment Gap', value: '8.5pp', period: 'Nov 2025', category: 'Labour Market' },
+                    // Benefits Spending (% GDP) - OECD SOCX
+                    { label: 'Total Social Spending', value: '18.8%', period: '2023', color: '#16a34a', category: 'Spending (% GDP)' },
+                    { label: 'Old Age & Survivors', value: '4.8%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Disability/Incapacity', value: '2.1%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Unemployment Benefits', value: '0.5%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Family Benefits', value: '2.1%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Housing Benefits', value: '0.4%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'ALMP (Active Labour)', value: '0.2%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Health Spending', value: '8.5%', period: '2023', category: 'Spending (% GDP)' },
+                    // Program Caseloads
+                    { label: 'JobSeeker Recipients', value: '812k', period: 'Nov 2025', color: '#9333ea', category: 'Program Caseloads' },
+                    { label: 'DSP Recipients', value: '768k', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Age Pension', value: '2.6m', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Family Tax Benefit', value: '1.4m families', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Parenting Payment', value: '342k', period: 'Nov 2025', category: 'Program Caseloads' }
                 ],
                 error: 'Using cached data'
             });
@@ -2751,11 +2958,36 @@
         async function fetchCBS() {
             updateLiveDataDisplay('NL', {
                 countryName: 'Netherlands',
-                source: 'CBS (cached)',
+                source: 'CBS / UWV (cached)',
                 indicators: [
-                    { label: 'Unemployment Rate', value: '3.7%', period: 'Nov 2025', color: '#0891b2' },
-                    { label: 'Employment Rate', value: '82.4%', period: 'Q3 2025' },
-                    { label: 'Vacancies', value: '388k', period: 'Q3 2025' }
+                    // Labour Market - Core
+                    { label: 'Unemployment Rate', value: '3.7%', period: 'Nov 2025', color: '#0891b2', category: 'Labour Market' },
+                    { label: 'Employment Rate (15-74)', value: '82.4%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Participation Rate', value: '85.1%', period: 'Q3 2025', category: 'Labour Market' },
+                    // Labour Market - Detailed
+                    { label: 'Youth Unemployment (15-24)', value: '8.5%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Long-term Unemployed', value: '0.7%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Part-time Rate', value: '47.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Flexible Contracts', value: '34.2%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Self-employed', value: '16.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'NEET Rate (15-29)', value: '4.5%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Job Vacancies', value: '388k', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Avg Weekly Hours', value: '30.8hrs', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Gender Employment Gap', value: '8.2pp', period: 'Q3 2025', category: 'Labour Market' },
+                    // Benefits Spending (% GDP) - OECD SOCX
+                    { label: 'Total Social Spending', value: '20.6%', period: '2023', color: '#16a34a', category: 'Spending (% GDP)' },
+                    { label: 'Old Age & Survivors', value: '6.4%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Disability/Incapacity', value: '2.6%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Unemployment Benefits', value: '0.6%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Family Benefits', value: '1.2%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Housing Benefits', value: '0.3%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'ALMP (Active Labour)', value: '0.8%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Health Spending', value: '8.4%', period: '2023', category: 'Spending (% GDP)' },
+                    // Program Caseloads
+                    { label: 'WW (Unemployment)', value: '142k', period: 'Nov 2025', color: '#9333ea', category: 'Program Caseloads' },
+                    { label: 'WIA (Disability)', value: '453k', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Bijstand (Social Asst)', value: '412k', period: 'Q3 2025', category: 'Program Caseloads' },
+                    { label: 'AOW (State Pension)', value: '3.5m', period: 'Nov 2025', category: 'Program Caseloads' }
                 ],
                 error: 'Using cached data'
             });
@@ -2765,11 +2997,36 @@
         async function fetchSCB() {
             updateLiveDataDisplay('SE', {
                 countryName: 'Sweden',
-                source: 'SCB (cached)',
+                source: 'SCB / Arbetsfrmedlingen (cached)',
                 indicators: [
-                    { label: 'Unemployment Rate', value: '8.5%', period: 'Nov 2025', color: '#6366f1' },
-                    { label: 'Employment Rate', value: '78.1%', period: 'Nov 2025' },
-                    { label: 'Youth Unemp. (15-24)', value: '22.1%', period: 'Nov 2025' }
+                    // Labour Market - Core
+                    { label: 'Unemployment Rate', value: '8.5%', period: 'Nov 2025', color: '#6366f1', category: 'Labour Market' },
+                    { label: 'Employment Rate (20-64)', value: '78.1%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Labour Force Part.', value: '84.9%', period: 'Nov 2025', category: 'Labour Market' },
+                    // Labour Market - Detailed
+                    { label: 'Youth Unemp. (15-24)', value: '22.1%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Long-term Unemployed', value: '2.1%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Part-time Rate', value: '22.5%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Temporary Contracts', value: '14.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'NEET Rate (15-29)', value: '6.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Job Vacancy Rate', value: '2.0%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Avg Weekly Hours', value: '36.4hrs', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Gender Employment Gap', value: '4.5pp', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Foreign-born Unemp.', value: '15.2%', period: 'Q3 2025', category: 'Labour Market' },
+                    // Benefits Spending (% GDP) - OECD SOCX
+                    { label: 'Total Social Spending', value: '25.5%', period: '2023', color: '#16a34a', category: 'Spending (% GDP)' },
+                    { label: 'Old Age & Survivors', value: '9.1%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Disability/Incapacity', value: '3.2%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Unemployment Benefits', value: '0.4%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Family Benefits', value: '3.0%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Housing Benefits', value: '0.4%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'ALMP (Active Labour)', value: '1.1%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Health Spending', value: '7.9%', period: '2023', category: 'Spending (% GDP)' },
+                    // Program Caseloads
+                    { label: 'A-kassa (Unemp Ins)', value: '112k', period: 'Nov 2025', color: '#9333ea', category: 'Program Caseloads' },
+                    { label: 'Sjukpenning (Sickness)', value: '143k', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Aktivitetsstd (Disab)', value: '89k', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Ekonomiskt bistnd', value: '128k households', period: 'Q3 2025', category: 'Program Caseloads' }
                 ],
                 error: 'Using cached data'
             });
@@ -2779,10 +3036,35 @@
         async function fetchDST() {
             updateLiveDataDisplay('DK', {
                 countryName: 'Denmark',
-                source: 'Statistics Denmark (cached)',
+                source: 'Statistics Denmark / STAR (cached)',
                 indicators: [
-                    { label: 'Unemployment Rate', value: '5.3%', period: 'Nov 2025', color: '#ec4899' },
-                    { label: 'Employment (15-64)', value: '77.8%', period: 'Q3 2025' }
+                    // Labour Market - Core
+                    { label: 'Unemployment Rate', value: '5.3%', period: 'Nov 2025', color: '#ec4899', category: 'Labour Market' },
+                    { label: 'Employment Rate (15-64)', value: '77.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Labour Force Part.', value: '81.9%', period: 'Q3 2025', category: 'Labour Market' },
+                    // Labour Market - Detailed
+                    { label: 'Youth Unemp. (15-24)', value: '10.8%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Long-term Unemployed', value: '0.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Part-time Rate', value: '23.1%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Temporary Contracts', value: '10.2%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'NEET Rate (15-29)', value: '6.2%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Job Vacancy Rate', value: '2.3%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Avg Weekly Hours', value: '33.1hrs', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Gender Employment Gap', value: '5.8pp', period: 'Q3 2025', category: 'Labour Market' },
+                    // Benefits Spending (% GDP) - OECD SOCX
+                    { label: 'Total Social Spending', value: '28.0%', period: '2023', color: '#16a34a', category: 'Spending (% GDP)' },
+                    { label: 'Old Age & Survivors', value: '10.2%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Disability/Incapacity', value: '4.1%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Unemployment Benefits', value: '1.2%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Family Benefits', value: '3.4%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Housing Benefits', value: '0.5%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'ALMP (Active Labour)', value: '2.0%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Health Spending', value: '6.4%', period: '2023', category: 'Spending (% GDP)' },
+                    // Program Caseloads
+                    { label: 'Dagpenge (Unemp Ins)', value: '98k', period: 'Nov 2025', color: '#9333ea', category: 'Program Caseloads' },
+                    { label: 'Kontanthjlp (Soc Asst)', value: '82k', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Sygedagpenge (Sickness)', value: '47k', period: 'Nov 2025', category: 'Program Caseloads' },
+                    { label: 'Frtidspension (Disab)', value: '203k', period: 'Q3 2025', category: 'Program Caseloads' }
                 ],
                 error: 'Using cached data'
             });
@@ -2792,11 +3074,37 @@
         async function fetchEStat() {
             updateLiveDataDisplay('JP', {
                 countryName: 'Japan',
-                source: 'e-Stat (cached)',
+                source: 'e-Stat / MHLW (cached)',
                 indicators: [
-                    { label: 'Unemployment Rate', value: '2.5%', period: 'Nov 2025', color: '#64748b' },
-                    { label: 'Employment', value: '67.8m', period: 'Nov 2025' },
-                    { label: 'Job-to-Applicant Ratio', value: '1.25', period: 'Nov 2025' }
+                    // Labour Market - Core
+                    { label: 'Unemployment Rate', value: '2.5%', period: 'Nov 2025', color: '#64748b', category: 'Labour Market' },
+                    { label: 'Employment Rate (15-64)', value: '79.2%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Labour Force Part.', value: '62.8%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Employment Total', value: '67.8m', period: 'Nov 2025', category: 'Labour Market' },
+                    // Labour Market - Detailed
+                    { label: 'Youth Unemp. (15-24)', value: '4.1%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Long-term Unemployed', value: '0.6%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Part-time Rate', value: '27.8%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Non-regular Workers', value: '37.2%', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'NEET Rate (15-29)', value: '2.8%', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Job-to-Applicant Ratio', value: '1.25', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Avg Monthly Hours', value: '136.4hrs', period: 'Nov 2025', category: 'Labour Market' },
+                    { label: 'Gender Employment Gap', value: '14.5pp', period: 'Q3 2025', category: 'Labour Market' },
+                    { label: 'Active Job Seekers', value: '1.66m', period: 'Nov 2025', category: 'Labour Market' },
+                    // Benefits Spending (% GDP) - OECD SOCX
+                    { label: 'Total Social Spending', value: '24.9%', period: '2023', color: '#16a34a', category: 'Spending (% GDP)' },
+                    { label: 'Old Age & Survivors', value: '11.8%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Disability/Incapacity', value: '1.1%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Unemployment Benefits', value: '0.2%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Family Benefits', value: '2.0%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Housing Benefits', value: '0.1%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'ALMP (Active Labour)', value: '0.1%', period: '2023', category: 'Spending (% GDP)' },
+                    { label: 'Health Spending', value: '9.5%', period: '2023', category: 'Spending (% GDP)' },
+                    // Program Caseloads
+                    { label: 'Employment Insurance', value: '358k', period: 'Oct 2025', color: '#9333ea', category: 'Program Caseloads' },
+                    { label: 'Seikatsu Hogo (Welfare)', value: '1.64m households', period: 'Oct 2025', category: 'Program Caseloads' },
+                    { label: 'National Pension', value: '41.2m', period: 'Mar 2025', category: 'Program Caseloads' },
+                    { label: 'Disability Pension', value: '2.2m', period: 'Mar 2025', category: 'Program Caseloads' }
                 ],
                 error: 'e-Stat requires API key'
             });
