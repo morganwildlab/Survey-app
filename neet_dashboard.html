@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEET Dashboard: Youth Inactivity & Labour Market Insights</title>
+
+    <!-- React -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Leaflet for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h1 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #4a6278;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-section p {
+            font-size: 0.8rem;
+            color: #bdc3c7;
+            line-height: 1.4;
+        }
+
+        .sidebar select, .sidebar input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #34495e;
+            color: white;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background: #e8f4f8;
+        }
+
+        .tab.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .value-boxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .value-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .value-box.danger { border-left: 4px solid #e74c3c; }
+        .value-box.warning { border-left: 4px solid #f39c12; }
+        .value-box.info { border-left: 4px solid #3498db; }
+        .value-box.success { border-left: 4px solid #27ae60; }
+
+        .value-box h4 {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .value-box .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .cards {
+            display: grid;
+            gap: 20px;
+        }
+
+        .cards-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .cards-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+
+        .map-container {
+            height: 500px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .stat-box h5 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .stat-box p {
+            font-size: 0.9rem;
+            color: #555;
+            margin: 5px 0;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .methodology h4 {
+            color: #2c3e50;
+            margin: 20px 0 10px;
+        }
+
+        .methodology h5 {
+            color: #34495e;
+            margin: 15px 0 8px;
+        }
+
+        .methodology p, .methodology li {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .methodology ul {
+            margin-left: 20px;
+        }
+
+        .methodology a {
+            color: #3498db;
+        }
+
+        @media (max-width: 1200px) {
+            .cards-2, .cards-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .dashboard {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ============================================================================
+        // DATA - Based on Get Britain Working Jan 2026 & ONS/DfE statistics
+        // ============================================================================
+
+        const nationalNEETData = {
+            quarters: [
+                "2019 Q1", "2019 Q2", "2019 Q3", "2019 Q4",
+                "2020 Q1", "2020 Q2", "2020 Q3", "2020 Q4",
+                "2021 Q1", "2021 Q2", "2021 Q3", "2021 Q4",
+                "2022 Q1", "2022 Q2", "2022 Q3", "2022 Q4",
+                "2023 Q1", "2023 Q2", "2023 Q3", "2023 Q4",
+                "2024 Q1", "2024 Q2", "2024 Q3", "2024 Q4",
+                "2025 Q1", "2025 Q2", "2025 Q3", "2025 Q4"
+            ],
+            neetTotal: [784, 762, 748, 791, 802, 892, 878, 812, 798, 756, 762, 788, 775, 748, 732, 768, 782, 796, 812, 842, 878, 892, 946, 987, 962, 948, 946, 958],
+            neetRate: [10.6, 10.3, 10.1, 10.7, 10.9, 12.1, 11.9, 11.0, 10.8, 10.2, 10.3, 10.6, 10.5, 10.1, 9.9, 10.4, 10.6, 10.8, 11.0, 11.4, 11.9, 12.1, 12.8, 13.4, 13.0, 12.8, 12.7, 12.9],
+            unemployed: [312, 298, 285, 318, 335, 412, 398, 345, 328, 298, 305, 322, 308, 285, 268, 295, 302, 318, 335, 362, 385, 398, 425, 448, 428, 412, 405, 418],
+            inactive: [472, 464, 463, 473, 467, 480, 480, 467, 470, 458, 457, 466, 467, 463, 464, 473, 480, 478, 477, 480, 493, 494, 521, 539, 534, 536, 541, 540],
+            inactiveDisability: [98, 102, 105, 108, 112, 118, 125, 132, 142, 152, 162, 175, 188, 198, 208, 218, 228, 238, 248, 258, 268, 278, 288, 298, 305, 312, 318, 325]
+        };
+
+        const regionalData = [
+            { region: "North East", neetRate: 14.8, youthUnemployment: 15.2, youthInactivity: 42.5, youthDisability: 8.5, intoWorkRate: 6.2, mentalHealth: 18.5 },
+            { region: "North West", neetRate: 13.2, youthUnemployment: 12.8, youthInactivity: 38.2, youthDisability: 7.2, intoWorkRate: 7.1, mentalHealth: 16.2 },
+            { region: "Yorkshire", neetRate: 12.8, youthUnemployment: 12.1, youthInactivity: 36.8, youthDisability: 6.8, intoWorkRate: 7.4, mentalHealth: 15.8 },
+            { region: "East Midlands", neetRate: 11.5, youthUnemployment: 10.8, youthInactivity: 35.2, youthDisability: 6.2, intoWorkRate: 7.8, mentalHealth: 14.5 },
+            { region: "West Midlands", neetRate: 13.8, youthUnemployment: 13.2, youthInactivity: 39.5, youthDisability: 7.5, intoWorkRate: 6.8, mentalHealth: 17.2 },
+            { region: "East of England", neetRate: 10.2, youthUnemployment: 9.5, youthInactivity: 33.8, youthDisability: 5.8, intoWorkRate: 8.2, mentalHealth: 13.8 },
+            { region: "London", neetRate: 12.5, youthUnemployment: 14.2, youthInactivity: 45.2, youthDisability: 5.2, intoWorkRate: 7.5, mentalHealth: 14.2 },
+            { region: "South East", neetRate: 9.8, youthUnemployment: 9.2, youthInactivity: 32.5, youthDisability: 5.5, intoWorkRate: 8.5, mentalHealth: 13.5 },
+            { region: "South West", neetRate: 10.5, youthUnemployment: 9.8, youthInactivity: 34.8, youthDisability: 6.2, intoWorkRate: 8.1, mentalHealth: 14.8 },
+            { region: "Wales", neetRate: 13.5, youthUnemployment: 11.5, youthInactivity: 38.5, youthDisability: 7.8, intoWorkRate: 6.8, mentalHealth: 17.5 },
+            { region: "Scotland", neetRate: 11.8, youthUnemployment: 10.2, youthInactivity: 36.2, youthDisability: 7.2, intoWorkRate: 7.2, mentalHealth: 16.8 },
+            { region: "N. Ireland", neetRate: 12.2, youthUnemployment: 11.8, youthInactivity: 40.5, youthDisability: 6.8, intoWorkRate: 6.5, mentalHealth: 15.2 }
+        ];
+
+        const localAuthorityData = [
+            { name: "Newcastle", region: "North East", neetRate: 5.2, yoi: 52, intoWork: 7.2, disability: 7.8, mental: 17.2, lat: 54.98, lng: -1.61, lmType: 6 },
+            { name: "Sunderland", region: "North East", neetRate: 6.1, yoi: 42, intoWork: 6.5, disability: 8.5, mental: 18.5, lat: 54.91, lng: -1.38, lmType: 6 },
+            { name: "Middlesbrough", region: "North East", neetRate: 7.2, yoi: 32, intoWork: 5.8, disability: 9.5, mental: 19.5, lat: 54.57, lng: -1.23, lmType: 7 },
+            { name: "Manchester", region: "North West", neetRate: 5.8, yoi: 58, intoWork: 7.5, disability: 7.2, mental: 15.8, lat: 53.48, lng: -2.24, lmType: 11 },
+            { name: "Liverpool", region: "North West", neetRate: 6.5, yoi: 45, intoWork: 6.8, disability: 8.2, mental: 17.2, lat: 53.41, lng: -2.99, lmType: 11 },
+            { name: "Blackpool", region: "North West", neetRate: 8.2, yoi: 23, intoWork: 5.2, disability: 10.5, mental: 21.5, lat: 53.82, lng: -3.05, lmType: 7 },
+            { name: "Leeds", region: "Yorkshire", neetRate: 4.8, yoi: 62, intoWork: 8.2, disability: 6.5, mental: 14.8, lat: 53.80, lng: -1.55, lmType: 10 },
+            { name: "Sheffield", region: "Yorkshire", neetRate: 5.2, yoi: 58, intoWork: 7.8, disability: 7.2, mental: 15.5, lat: 53.38, lng: -1.47, lmType: 10 },
+            { name: "Barnsley", region: "Yorkshire", neetRate: 7.5, yoi: 35, intoWork: 6.2, disability: 9.8, mental: 19.2, lat: 53.55, lng: -1.48, lmType: 6 },
+            { name: "Birmingham", region: "West Midlands", neetRate: 6.2, yoi: 48, intoWork: 6.8, disability: 8.2, mental: 16.8, lat: 52.49, lng: -1.90, lmType: 10 },
+            { name: "Coventry", region: "West Midlands", neetRate: 5.5, yoi: 55, intoWork: 7.5, disability: 7.5, mental: 15.5, lat: 52.41, lng: -1.51, lmType: 10 },
+            { name: "Nottingham", region: "East Midlands", neetRate: 6.8, yoi: 45, intoWork: 6.8, disability: 8.5, mental: 17.2, lat: 52.95, lng: -1.15, lmType: 12 },
+            { name: "Leicester", region: "East Midlands", neetRate: 6.2, yoi: 48, intoWork: 6.5, disability: 7.8, mental: 16.5, lat: 52.64, lng: -1.13, lmType: 12 },
+            { name: "Boston", region: "East Midlands", neetRate: 5.2, yoi: 55, intoWork: 12.7, disability: 6.2, mental: 14.2, lat: 52.98, lng: -0.02, lmType: 5 },
+            { name: "Cambridge", region: "East", neetRate: 2.8, yoi: 78, intoWork: 9.5, disability: 4.2, mental: 11.8, lat: 52.21, lng: 0.12, lmType: 4 },
+            { name: "Norwich", region: "East", neetRate: 5.5, yoi: 52, intoWork: 8.8, disability: 6.5, mental: 15.2, lat: 52.63, lng: 1.30, lmType: 5 },
+            { name: "Tower Hamlets", region: "London", neetRate: 5.8, yoi: 52, intoWork: 7.2, disability: 5.8, mental: 14.2, lat: 51.52, lng: -0.01, lmType: 1 },
+            { name: "Westminster", region: "London", neetRate: 3.8, yoi: 72, intoWork: 8.8, disability: 4.8, mental: 12.5, lat: 51.51, lng: -0.14, lmType: 1 },
+            { name: "Barking & Dag.", region: "London", neetRate: 7.5, yoi: 38, intoWork: 6.2, disability: 7.2, mental: 16.8, lat: 51.54, lng: 0.13, lmType: 2 },
+            { name: "Brighton", region: "South East", neetRate: 5.2, yoi: 62, intoWork: 8.2, disability: 6.2, mental: 14.8, lat: 50.82, lng: -0.14, lmType: 4 },
+            { name: "Southampton", region: "South East", neetRate: 5.8, yoi: 55, intoWork: 7.5, disability: 6.8, mental: 15.5, lat: 50.91, lng: -1.40, lmType: 5 },
+            { name: "Bristol", region: "South West", neetRate: 5.5, yoi: 65, intoWork: 8.5, disability: 6.5, mental: 14.5, lat: 51.45, lng: -2.59, lmType: 4 },
+            { name: "Plymouth", region: "South West", neetRate: 6.2, yoi: 48, intoWork: 7.2, disability: 7.5, mental: 16.2, lat: 50.37, lng: -4.14, lmType: 7 },
+            { name: "Torbay", region: "South West", neetRate: 7.8, yoi: 35, intoWork: 5.5, disability: 9.2, mental: 18.8, lat: 50.46, lng: -3.53, lmType: 7 },
+            { name: "Cardiff", region: "Wales", neetRate: 5.5, yoi: 58, intoWork: 7.5, disability: 7.2, mental: 16.5, lat: 51.48, lng: -3.18, lmType: 13 },
+            { name: "Swansea", region: "Wales", neetRate: 6.2, yoi: 52, intoWork: 7.2, disability: 7.8, mental: 17.2, lat: 51.62, lng: -3.94, lmType: 13 },
+            { name: "Blaenau Gwent", region: "Wales", neetRate: 10.5, yoi: 25, intoWork: 4.8, disability: 12.2, mental: 22.5, lat: 51.79, lng: -3.21, lmType: 8 },
+            { name: "Glasgow", region: "Scotland", neetRate: 6.8, yoi: 48, intoWork: 6.5, disability: 8.5, mental: 18.2, lat: 55.86, lng: -4.25, lmType: 9 },
+            { name: "Edinburgh", region: "Scotland", neetRate: 4.5, yoi: 68, intoWork: 8.2, disability: 5.8, mental: 13.5, lat: 55.95, lng: -3.19, lmType: 9 },
+            { name: "Dundee", region: "Scotland", neetRate: 6.8, yoi: 45, intoWork: 6.8, disability: 8.2, mental: 17.8, lat: 56.46, lng: -2.97, lmType: 9 }
+        ];
+
+        const disabilityTrendData = {
+            years: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
+            longTermSick: [125, 132, 142, 155, 168, 185, 212, 248, 278, 298, 325],
+            pctLongTermSick: [1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 3.0, 3.5, 3.9, 4.2, 4.6],
+            mentalHealth: [52, 58, 65, 75, 88, 102, 125, 152, 178, 198, 218],
+            musculoskeletal: [18, 19, 21, 22, 24, 26, 28, 32, 35, 38, 42],
+            otherHealth: [55, 55, 56, 58, 56, 57, 59, 64, 65, 62, 65]
+        };
+
+        const intoWorkData = {
+            byDuration: [
+                { duration: "0-3 months", rate: 12.5 },
+                { duration: "3-6 months", rate: 8.2 },
+                { duration: "6-12 months", rate: 6.1 },
+                { duration: "12-24 months", rate: 4.5 },
+                { duration: "24+ months", rate: 3.2 }
+            ],
+            byAge: [
+                { age: "Under 25", rate: 9.8 },
+                { age: "25-34", rate: 8.2 },
+                { age: "35-44", rate: 7.1 },
+                { age: "45-54", rate: 6.2 },
+                { age: "55+", rate: 4.8 }
+            ],
+            byFamily: [
+                { type: "Single, no children", rate: 8.5 },
+                { type: "Couple, no children", rate: 7.8 },
+                { type: "Couple, with children", rate: 6.8 },
+                { type: "Single, with children", rate: 5.2 }
+            ],
+            monthly: [
+                { month: "Jan", rate: 6.8 }, { month: "Feb", rate: 6.5 }, { month: "Mar", rate: 7.2 },
+                { month: "Apr", rate: 8.5 }, { month: "May", rate: 7.8 }, { month: "Jun", rate: 7.4 },
+                { month: "Jul", rate: 7.2 }, { month: "Aug", rate: 7.5 }, { month: "Sep", rate: 8.2 },
+                { month: "Oct", rate: 8.8 }, { month: "Nov", rate: 7.5 }, { month: "Dec", rate: 6.2 }
+            ]
+        };
+
+        const labourMarketTypes = [
+            { type: 1, name: "London Central", description: "High UC volumes, high employment, young population", avgNEET: 4.8, avgIntoWork: 8.0 },
+            { type: 2, name: "London Outer", description: "Mixed suburban, good employment, lower disability", avgNEET: 6.2, avgIntoWork: 7.2 },
+            { type: 3, name: "Prosperous South", description: "High employment, low UC, high qualifications", avgNEET: 4.2, avgIntoWork: 8.5 },
+            { type: 4, name: "University Cities", description: "High student population, variable NEET", avgNEET: 4.5, avgIntoWork: 8.8 },
+            { type: 5, name: "Rural/Coastal", description: "Low population density, higher into-work rates", avgNEET: 5.5, avgIntoWork: 9.2 },
+            { type: 6, name: "Post-Industrial North", description: "High disability, lower employment, legacy industries", avgNEET: 6.8, avgIntoWork: 6.5 },
+            { type: 7, name: "Coastal Deprivation", description: "High NEET, seasonal employment, older demographics", avgNEET: 7.8, avgIntoWork: 5.5 },
+            { type: 8, name: "Welsh Valleys", description: "High incapacity, post-mining, tight labour markets", avgNEET: 9.2, avgIntoWork: 5.0 },
+            { type: 9, name: "Scottish Urban", description: "Mixed outcomes, devolved policy context", avgNEET: 6.0, avgIntoWork: 7.2 },
+            { type: 10, name: "Midlands Manufacturing", description: "Variable employment, automotive/logistics", avgNEET: 5.8, avgIntoWork: 7.2 },
+            { type: 11, name: "Northern Towns", description: "Mixed NEET, regeneration areas", avgNEET: 6.2, avgIntoWork: 7.0 },
+            { type: 12, name: "East Midlands Mixed", description: "Variable outcomes, mixed economy", avgNEET: 6.5, avgIntoWork: 6.8 },
+            { type: 13, name: "South Wales Coast", description: "Port cities, tourism, manufacturing mix", avgNEET: 5.8, avgIntoWork: 7.2 },
+            { type: 14, name: "Scottish Highlands", description: "Remote rural, distinctive labour markets", avgNEET: 5.2, avgIntoWork: 7.8 }
+        ];
+
+        // ============================================================================
+        // COMPONENTS
+        // ============================================================================
+
+        const { useState, useEffect, useRef } = React;
+
+        function ValueBox({ title, value, type }) {
+            return (
+                <div className={`value-box ${type}`}>
+                    <h4>{title}</h4>
+                    <div className="value">{value}</div>
+                </div>
+            );
+        }
+
+        function Card({ title, children }) {
+            return (
+                <div className="card">
+                    {title && <div className="card-header">{title}</div>}
+                    <div className="card-body">{children}</div>
+                </div>
+            );
+        }
+
+        function LineChart({ data, labels, datasets, title }) {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+
+            useEffect(() => {
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets.map((ds, i) => ({
+                            label: ds.label,
+                            data: ds.data,
+                            borderColor: ds.color,
+                            backgroundColor: ds.color + '20',
+                            fill: ds.fill || false,
+                            tension: 0.3
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            title: { display: !!title, text: title }
+                        },
+                        scales: {
+                            y: { beginAtZero: false }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) chartRef.current.destroy();
+                };
+            }, [data, labels, datasets]);
+
+            return (
+                <div className="chart-container">
+                    <canvas ref={canvasRef}></canvas>
+                </div>
+            );
+        }
+
+        function BarChart({ data, labels, label, color, horizontal, title }) {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+
+            useEffect(() => {
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: data,
+                            backgroundColor: Array.isArray(color) ? color : data.map((_, i) => color || `hsl(${(i * 30) % 360}, 70%, 50%)`),
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: horizontal ? 'y' : 'x',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: !!title, text: title }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) chartRef.current.destroy();
+                };
+            }, [data, labels]);
+
+            return (
+                <div className="chart-container">
+                    <canvas ref={canvasRef}></canvas>
+                </div>
+            );
+        }
+
+        function StackedAreaChart({ data, labels, datasets, title }) {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+
+            useEffect(() => {
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets.map(ds => ({
+                            label: ds.label,
+                            data: ds.data,
+                            borderColor: ds.color,
+                            backgroundColor: ds.color + '80',
+                            fill: true,
+                            tension: 0.3
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            title: { display: !!title, text: title }
+                        },
+                        scales: {
+                            y: { stacked: true }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) chartRef.current.destroy();
+                };
+            }, [data, labels, datasets]);
+
+            return (
+                <div className="chart-container">
+                    <canvas ref={canvasRef}></canvas>
+                </div>
+            );
+        }
+
+        function DoughnutChart({ data, labels, colors, title }) {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+
+            useEffect(() => {
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right' },
+                            title: { display: !!title, text: title }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) chartRef.current.destroy();
+                };
+            }, [data, labels, colors]);
+
+            return (
+                <div className="chart-container">
+                    <canvas ref={canvasRef}></canvas>
+                </div>
+            );
+        }
+
+        function ScatterChart({ data, xLabel, yLabel, title }) {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+
+            useEffect(() => {
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Local Authorities',
+                            data: data,
+                            backgroundColor: data.map(d => d.color || '#3498db'),
+                            pointRadius: 8,
+                            pointHoverRadius: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: !!title, text: title },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => {
+                                        const d = ctx.raw;
+                                        return `${d.name}: (${d.x.toFixed(1)}, ${d.y.toFixed(1)})`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: xLabel } },
+                            y: { title: { display: true, text: yLabel } }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) chartRef.current.destroy();
+                };
+            }, [data]);
+
+            return (
+                <div className="chart-container">
+                    <canvas ref={canvasRef}></canvas>
+                </div>
+            );
+        }
+
+        function LeafletMap({ data, indicator, title }) {
+            const mapRef = useRef(null);
+            const mapInstance = useRef(null);
+
+            useEffect(() => {
+                if (!mapInstance.current) {
+                    mapInstance.current = L.map(mapRef.current).setView([54.5, -2.5], 6);
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                    }).addTo(mapInstance.current);
+                }
+
+                // Clear existing markers
+                mapInstance.current.eachLayer(layer => {
+                    if (layer instanceof L.CircleMarker) {
+                        mapInstance.current.removeLayer(layer);
+                    }
+                });
+
+                // Get value range for color scaling
+                const values = data.map(d => d[indicator]);
+                const minVal = Math.min(...values);
+                const maxVal = Math.max(...values);
+
+                // Add markers
+                data.forEach(la => {
+                    const value = la[indicator];
+                    const normalized = (value - minVal) / (maxVal - minVal);
+
+                    // Color: green (good) to red (bad) depending on indicator
+                    const reverseColor = ['yoi', 'intoWork'].includes(indicator);
+                    const hue = reverseColor ? normalized * 120 : (1 - normalized) * 120;
+                    const color = `hsl(${hue}, 70%, 45%)`;
+
+                    const marker = L.circleMarker([la.lat, la.lng], {
+                        radius: 8 + normalized * 8,
+                        fillColor: color,
+                        color: '#fff',
+                        weight: 2,
+                        fillOpacity: 0.8
+                    }).addTo(mapInstance.current);
+
+                    const indicatorLabels = {
+                        neetRate: 'NEET Rate (16-17)',
+                        yoi: 'Youth Opportunity Index',
+                        intoWork: 'Into-Work Rate',
+                        disability: 'Youth Disability Rate',
+                        mental: 'Mental Health Rate'
+                    };
+
+                    marker.bindPopup(`
+                        <strong>${la.name}</strong><br>
+                        Region: ${la.region}<br>
+                        ${indicatorLabels[indicator]}: ${value}${indicator === 'yoi' ? '' : '%'}
+                    `);
+                });
+
+            }, [data, indicator]);
+
+            return (
+                <div ref={mapRef} className="map-container"></div>
+            );
+        }
+
+        // ============================================================================
+        // TAB PANELS
+        // ============================================================================
+
+        function OverviewTab() {
+            const latestIdx = nationalNEETData.quarters.length - 1;
+            const latestTotal = nationalNEETData.neetTotal[latestIdx];
+            const latestRate = nationalNEETData.neetRate[latestIdx];
+            const latestDisability = nationalNEETData.inactiveDisability[latestIdx];
+
+            // Pie chart data
+            const unemployed = nationalNEETData.unemployed[latestIdx];
+            const inactive = nationalNEETData.inactive[latestIdx];
+            const inactiveDisability = nationalNEETData.inactiveDisability[latestIdx];
+            const inactiveOther = inactive - inactiveDisability;
+
+            return (
+                <>
+                    <div className="value-boxes">
+                        <ValueBox title="NEET Total (16-24)" value={`${latestTotal}k`} type="danger" />
+                        <ValueBox title="NEET Rate" value={`${latestRate}%`} type="warning" />
+                        <ValueBox title="Youth Disability Inactive" value={`${latestDisability}k`} type="info" />
+                        <ValueBox title="Into-Work Rate (UC)" value="7.4%" type="success" />
+                    </div>
+
+                    <div className="cards cards-2">
+                        <Card title="NEET Trends: National Time Series (16-24 year olds)">
+                            <LineChart
+                                labels={nationalNEETData.quarters}
+                                datasets={[
+                                    { label: 'Total NEET', data: nationalNEETData.neetTotal, color: '#e74c3c' },
+                                    { label: 'Unemployed', data: nationalNEETData.unemployed, color: '#3498db' },
+                                    { label: 'Inactive', data: nationalNEETData.inactive, color: '#27ae60' }
+                                ]}
+                            />
+                        </Card>
+
+                        <Card title={`Current NEET Breakdown (${nationalNEETData.quarters[latestIdx]})`}>
+                            <DoughnutChart
+                                labels={['Unemployed', 'Inactive - Disability', 'Inactive - Other']}
+                                data={[unemployed, inactiveDisability, inactiveOther]}
+                                colors={['#3498db', '#e74c3c', '#9b59b6']}
+                            />
+                        </Card>
+                    </div>
+                </>
+            );
+        }
+
+        function MapsTab({ mapIndicator, setMapIndicator }) {
+            const sortedRegions = [...regionalData].sort((a, b) => b.neetRate - a.neetRate);
+
+            const indicatorLabels = {
+                neetRate: 'NEET Rate (16-17)',
+                yoi: 'Youth Opportunity Index',
+                intoWork: 'Into-Work Rate (%)',
+                disability: 'Youth Disability Rate (%)',
+                mental: 'Mental Health Prevalence (%)'
+            };
+
+            return (
+                <>
+                    <div className="cards cards-2" style={{marginBottom: '20px'}}>
+                        <Card title={`Local Authority Map: ${indicatorLabels[mapIndicator]}`}>
+                            <div style={{marginBottom: '10px'}}>
+                                <select value={mapIndicator} onChange={e => setMapIndicator(e.target.value)} style={{padding: '8px', borderRadius: '4px', border: '1px solid #ddd'}}>
+                                    <option value="neetRate">NEET Rate (16-17)</option>
+                                    <option value="yoi">Youth Opportunity Index</option>
+                                    <option value="intoWork">UC Into-Work Rate</option>
+                                    <option value="disability">Youth Disability Rate</option>
+                                    <option value="mental">Mental Health Prevalence</option>
+                                </select>
+                            </div>
+                            <LeafletMap data={localAuthorityData} indicator={mapIndicator} />
+                        </Card>
+
+                        <div>
+                            <Card title="NEET Rate by Region">
+                                <BarChart
+                                    labels={sortedRegions.map(r => r.region)}
+                                    data={sortedRegions.map(r => r.neetRate)}
+                                    label="NEET Rate (%)"
+                                    horizontal={true}
+                                    color={sortedRegions.map((r, i) => `hsl(${120 - (i * 10)}, 70%, 50%)`)}
+                                />
+                            </Card>
+
+                            <Card title="NEET vs Youth Disability (Regions)">
+                                <ScatterChart
+                                    data={regionalData.map(r => ({
+                                        x: r.youthDisability,
+                                        y: r.neetRate,
+                                        name: r.region,
+                                        color: `hsl(${(regionalData.indexOf(r) * 30) % 360}, 70%, 50%)`
+                                    }))}
+                                    xLabel="Youth Disability Rate (%)"
+                                    yLabel="NEET Rate (%)"
+                                />
+                            </Card>
+                        </div>
+                    </div>
+
+                    <Card title="Local Authority Rankings">
+                        <div className="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Local Authority</th>
+                                        <th>Region</th>
+                                        <th>NEET Rate</th>
+                                        <th>Youth Opp. Index</th>
+                                        <th>Into-Work Rate</th>
+                                        <th>Youth Disability</th>
+                                        <th>LM Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[...localAuthorityData].sort((a, b) => b.neetRate - a.neetRate).map(la => (
+                                        <tr key={la.name}>
+                                            <td>{la.name}</td>
+                                            <td>{la.region}</td>
+                                            <td>{la.neetRate}%</td>
+                                            <td>{la.yoi}</td>
+                                            <td>{la.intoWork}%</td>
+                                            <td>{la.disability}%</td>
+                                            <td>{la.lmType}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </>
+            );
+        }
+
+        function DisabilityTab() {
+            return (
+                <>
+                    <div className="cards cards-2">
+                        <Card title="Rise in Youth Health-Related Inactivity (16-24)">
+                            <LineChart
+                                labels={disabilityTrendData.years}
+                                datasets={[
+                                    { label: 'Long-term Sick (thousands)', data: disabilityTrendData.longTermSick, color: '#e74c3c', fill: true }
+                                ]}
+                            />
+                        </Card>
+
+                        <Card title="Health Conditions Breakdown">
+                            <StackedAreaChart
+                                labels={disabilityTrendData.years}
+                                datasets={[
+                                    { label: 'Mental Health', data: disabilityTrendData.mentalHealth, color: '#e74c3c' },
+                                    { label: 'Musculoskeletal', data: disabilityTrendData.musculoskeletal, color: '#3498db' },
+                                    { label: 'Other Health', data: disabilityTrendData.otherHealth, color: '#27ae60' }
+                                ]}
+                            />
+                        </Card>
+                    </div>
+
+                    <div className="cards cards-2">
+                        <Card title="Youth Disability Inactivity Rate by Region">
+                            <BarChart
+                                labels={[...regionalData].sort((a, b) => b.youthDisability - a.youthDisability).map(r => r.region)}
+                                data={[...regionalData].sort((a, b) => b.youthDisability - a.youthDisability).map(r => r.youthDisability)}
+                                label="Youth Disability Rate (%)"
+                                horizontal={true}
+                                color={[...regionalData].sort((a, b) => b.youthDisability - a.youthDisability).map((r, i) => `hsl(${120 - (i * 10)}, 70%, 50%)`)}
+                            />
+                        </Card>
+
+                        <Card title="Key Statistics">
+                            <div className="stat-box">
+                                <h5>2015 to 2025 Change</h5>
+                                <p><strong>+160%</strong> increase in youth long-term sick inactivity</p>
+                                <p><strong>+319%</strong> increase in youth mental health inactivity</p>
+                                <p>Youth disability inactivity now <strong>325,000</strong> (4.6% of 16-24s)</p>
+                            </div>
+                            <div className="stat-box">
+                                <h5>Regional Variation</h5>
+                                <p>Highest: <strong>North East</strong> (8.5%)</p>
+                                <p>Lowest: <strong>London</strong> (5.2%)</p>
+                                <p>Range: <strong>3.3 percentage points</strong></p>
+                            </div>
+                        </Card>
+                    </div>
+                </>
+            );
+        }
+
+        function IntoWorkTab() {
+            return (
+                <>
+                    <div className="cards cards-2">
+                        <Card title="Into-Work Rate by Duration on UC">
+                            <BarChart
+                                labels={intoWorkData.byDuration.map(d => d.duration)}
+                                data={intoWorkData.byDuration.map(d => d.rate)}
+                                label="Into-Work Rate (%)"
+                                color="#3498db"
+                            />
+                            <p style={{marginTop: '10px', fontSize: '0.85rem', color: '#666'}}>
+                                Into-work rates decline sharply with duration: from 12.5% at 0-3 months to just 3.2% at 24+ months.
+                            </p>
+                        </Card>
+
+                        <Card title="Into-Work Rate by Age Group">
+                            <BarChart
+                                labels={intoWorkData.byAge.map(d => d.age)}
+                                data={intoWorkData.byAge.map(d => d.rate)}
+                                label="Into-Work Rate (%)"
+                                color="#27ae60"
+                            />
+                            <p style={{marginTop: '10px', fontSize: '0.85rem', color: '#666'}}>
+                                Under-25s have the highest into-work rate (9.8%), supporting early intervention approaches.
+                            </p>
+                        </Card>
+                    </div>
+
+                    <div className="cards cards-2">
+                        <Card title="Seasonality in Into-Work Rates">
+                            <LineChart
+                                labels={intoWorkData.monthly.map(d => d.month)}
+                                datasets={[
+                                    { label: 'Into-Work Rate (%)', data: intoWorkData.monthly.map(d => d.rate), color: '#9b59b6' }
+                                ]}
+                            />
+                            <p style={{marginTop: '10px', fontSize: '0.85rem', color: '#666'}}>
+                                Clear seasonal pattern with peaks in April (8.5%) and October (8.8%), troughs in December (6.2%).
+                            </p>
+                        </Card>
+
+                        <Card title="Into-Work Rate by Family Type">
+                            <BarChart
+                                labels={intoWorkData.byFamily.map(d => d.type)}
+                                data={intoWorkData.byFamily.map(d => d.rate)}
+                                label="Into-Work Rate (%)"
+                                horizontal={true}
+                                color="#e67e22"
+                            />
+                            <p style={{marginTop: '10px', fontSize: '0.85rem', color: '#666'}}>
+                                Single parents face the lowest into-work rates (5.2%), highlighting childcare barriers.
+                            </p>
+                        </Card>
+                    </div>
+                </>
+            );
+        }
+
+        function CorrelationsTab({ scatterX, setScatterX, scatterY, setScatterY }) {
+            const varLabels = {
+                neetRate: 'NEET Rate (16-17)',
+                yoi: 'Youth Opportunity Index',
+                intoWork: 'Into-Work Rate',
+                disability: 'Youth Disability Rate',
+                mental: 'Mental Health Rate'
+            };
+
+            const scatterData = localAuthorityData.map(la => ({
+                x: la[scatterX],
+                y: la[scatterY],
+                name: la.name,
+                color: `hsl(${(localAuthorityData.indexOf(la) * 12) % 360}, 70%, 50%)`
+            }));
+
+            // Calculate correlation
+            const xVals = localAuthorityData.map(la => la[scatterX]);
+            const yVals = localAuthorityData.map(la => la[scatterY]);
+            const n = xVals.length;
+            const sumX = xVals.reduce((a, b) => a + b, 0);
+            const sumY = yVals.reduce((a, b) => a + b, 0);
+            const sumXY = xVals.reduce((a, x, i) => a + x * yVals[i], 0);
+            const sumX2 = xVals.reduce((a, x) => a + x * x, 0);
+            const sumY2 = yVals.reduce((a, y) => a + y * y, 0);
+            const correlation = (n * sumXY - sumX * sumY) / Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+
+            const strength = Math.abs(correlation) > 0.5 ? 'strong' : Math.abs(correlation) > 0.3 ? 'moderate' : 'weak';
+            const direction = correlation > 0 ? 'positive' : 'negative';
+
+            return (
+                <>
+                    <Card>
+                        <div style={{display: 'flex', gap: '20px', flexWrap: 'wrap'}}>
+                            <div>
+                                <label style={{display: 'block', marginBottom: '5px', fontWeight: '600'}}>X-Axis Variable</label>
+                                <select value={scatterX} onChange={e => setScatterX(e.target.value)} style={{padding: '8px', borderRadius: '4px', border: '1px solid #ddd', minWidth: '200px'}}>
+                                    {Object.entries(varLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label style={{display: 'block', marginBottom: '5px', fontWeight: '600'}}>Y-Axis Variable</label>
+                                <select value={scatterY} onChange={e => setScatterY(e.target.value)} style={{padding: '8px', borderRadius: '4px', border: '1px solid #ddd', minWidth: '200px'}}>
+                                    {Object.entries(varLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <div className="cards cards-2" style={{marginTop: '20px'}}>
+                        <Card title={`${varLabels[scatterY]} vs ${varLabels[scatterX]}`}>
+                            <ScatterChart
+                                data={scatterData}
+                                xLabel={varLabels[scatterX]}
+                                yLabel={varLabels[scatterY]}
+                            />
+                        </Card>
+
+                        <Card title="Correlation Analysis">
+                            <div className="stat-box">
+                                <h5>Pearson Correlation</h5>
+                                <p><strong>r = {correlation.toFixed(3)}</strong></p>
+                                <p>N = {n} local authorities</p>
+                            </div>
+                            <div className="stat-box">
+                                <h5>Interpretation</h5>
+                                <p>There is a <strong>{strength} {direction}</strong> correlation between these variables.</p>
+                                {scatterX === 'disability' && scatterY === 'neetRate' && (
+                                    <p>Areas with higher youth disability rates tend to have higher NEET rates, suggesting health is a key driver.</p>
+                                )}
+                                {scatterX === 'yoi' && scatterY === 'neetRate' && (
+                                    <p>Areas with better youth opportunities (higher YOI) have lower NEET rates.</p>
+                                )}
+                            </div>
+                        </Card>
+                    </div>
+                </>
+            );
+        }
+
+        function LabourMarketTypesTab() {
+            return (
+                <>
+                    <Card>
+                        <p>Get Britain Working identifies <strong>14 distinct local labour market types</strong> based on cluster analysis of:</p>
+                        <ul style={{marginLeft: '20px', marginTop: '10px'}}>
+                            <li>UC jobseeker volumes</li>
+                            <li>Employment rates</li>
+                            <li>Work-limiting disability prevalence</li>
+                            <li>Educational qualifications</li>
+                            <li>Musculoskeletal condition rates</li>
+                            <li>Mental health prevalence</li>
+                        </ul>
+                    </Card>
+
+                    <div className="cards cards-2" style={{marginTop: '20px'}}>
+                        <Card title="NEET Rates by Labour Market Type">
+                            <BarChart
+                                labels={labourMarketTypes.map(t => `Type ${t.type}`)}
+                                data={labourMarketTypes.map(t => t.avgNEET)}
+                                label="Avg NEET Rate (%)"
+                                color={labourMarketTypes.map((t, i) => `hsl(${120 - (t.avgNEET * 10)}, 70%, 50%)`)}
+                            />
+                        </Card>
+
+                        <Card title="Into-Work Rates by Labour Market Type">
+                            <BarChart
+                                labels={labourMarketTypes.map(t => `Type ${t.type}`)}
+                                data={labourMarketTypes.map(t => t.avgIntoWork)}
+                                label="Avg Into-Work Rate (%)"
+                                color={labourMarketTypes.map((t, i) => `hsl(${t.avgIntoWork * 12}, 70%, 50%)`)}
+                            />
+                        </Card>
+                    </div>
+
+                    <Card title="Labour Market Type Profiles" style={{marginTop: '20px'}}>
+                        <div className="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Avg NEET</th>
+                                        <th>Avg Into-Work</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {labourMarketTypes.map(t => (
+                                        <tr key={t.type}>
+                                            <td>{t.type}</td>
+                                            <td><strong>{t.name}</strong></td>
+                                            <td>{t.description}</td>
+                                            <td>{t.avgNEET}%</td>
+                                            <td>{t.avgIntoWork}%</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </>
+            );
+        }
+
+        function MethodologyTab() {
+            return (
+                <Card>
+                    <div className="methodology">
+                        <h4>Data Sources</h4>
+
+                        <h5>Get Britain Working: Labour Market Insights</h5>
+                        <p>Published by DWP quarterly, starting October 2025. The January 2026 release provides:</p>
+                        <ul>
+                            <li>UC 'Searching for work' into-work rates by geography, duration, age, and family type</li>
+                            <li>14 local labour market types based on cluster analysis</li>
+                            <li>Employment sector distributions for UC recipients</li>
+                            <li>Health journey and work capability data</li>
+                        </ul>
+                        <p><a href="https://www.gov.uk/government/statistics/get-britain-working-labour-market-insights-january-2026" target="_blank">Access the full release</a></p>
+
+                        <h5>NEET Statistics Annual Brief</h5>
+                        <p>Published by DfE, provides 16-17 NEET estimates by local authority. Key caveats:</p>
+                        <ul>
+                            <li>NCCIS figures include 'not known' activity, which may overestimate NEET</li>
+                            <li>'Not known' proportions vary by local authority, complicating comparisons</li>
+                            <li>Different methodologies apply to 16-17 (admin data) vs 18-24 (survey data)</li>
+                        </ul>
+
+                        <h5>ONS Young People NEET Bulletin</h5>
+                        <p>Quarterly bulletin for 16-24 NEET based on Labour Force Survey. Notes:</p>
+                        <ul>
+                            <li>LFS data quality issues in 2023 led to temporary suspension</li>
+                            <li>Reintroduced estimates from February 2024 should be treated with caution</li>
+                            <li>Regional estimates have wider confidence intervals</li>
+                        </ul>
+
+                        <h5>Youth Opportunity Index</h5>
+                        <p>Developed by Impetus, measuring education and employment opportunities at LA level. Scores range from 0-100, with higher scores indicating better opportunities.</p>
+
+                        <h4>Definitions</h4>
+
+                        <h5>NEET</h5>
+                        <p>Not in Education, Employment, or Training. Includes both:</p>
+                        <ul>
+                            <li><strong>Unemployed NEET:</strong> Seeking work and available</li>
+                            <li><strong>Inactive NEET:</strong> Not seeking work (reasons include disability, caring responsibilities, discouragement)</li>
+                        </ul>
+
+                        <h5>Into-Work Rate</h5>
+                        <p>From GBW: "The proportion of UC Searching for work regime customers who have earnings in one assessment period who did not have earnings in the preceding assessment period."</p>
+
+                        <h5>Labour Market Types</h5>
+                        <p>14 clusters identified using k-means clustering on 6 standardized variables. Types range from 'London Central' (high employment, young population) to 'Welsh Valleys' (high incapacity, tight labour markets).</p>
+                    </div>
+                </Card>
+            );
+        }
+
+        // ============================================================================
+        // MAIN APP
+        // ============================================================================
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('overview');
+            const [mapIndicator, setMapIndicator] = useState('neetRate');
+            const [scatterX, setScatterX] = useState('disability');
+            const [scatterY, setScatterY] = useState('neetRate');
+
+            const tabs = [
+                { id: 'overview', label: 'Overview' },
+                { id: 'maps', label: 'Geographic Maps' },
+                { id: 'disability', label: 'Youth Disability & Health' },
+                { id: 'intowork', label: 'Into-Work Rates (GBW)' },
+                { id: 'correlations', label: 'Correlations' },
+                { id: 'lmtypes', label: 'Labour Market Types' },
+                { id: 'methodology', label: 'Data & Methodology' }
+            ];
+
+            return (
+                <div className="dashboard">
+                    <div className="sidebar">
+                        <h1>NEET Dashboard</h1>
+
+                        <div className="sidebar-section">
+                            <h3>Data Sources</h3>
+                            <p><strong>Get Britain Working</strong><br/>DWP, January 2026</p>
+                            <p><strong>NEET Statistics</strong><br/>DfE, Calendar Year 2024</p>
+                            <p><strong>Young People NEET</strong><br/>ONS, February 2025</p>
+                        </div>
+
+                        <div className="sidebar-section">
+                            <h3>About</h3>
+                            <p>This dashboard explores NEET concentrations, youth disability inactivity, and labour market outcomes across the UK.</p>
+                        </div>
+
+                        <div className="sidebar-section">
+                            <h3>Key Findings</h3>
+                            <p>NEET rose to <strong>958k</strong> (12.9%) in 2025 Q4</p>
+                            <p>Youth disability inactivity up <strong>160%</strong> since 2015</p>
+                            <p>Into-work rates fall <strong>75%</strong> after 24 months on UC</p>
+                        </div>
+                    </div>
+
+                    <div className="main-content">
+                        <div className="tabs">
+                            {tabs.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(tab.id)}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {activeTab === 'overview' && <OverviewTab />}
+                        {activeTab === 'maps' && <MapsTab mapIndicator={mapIndicator} setMapIndicator={setMapIndicator} />}
+                        {activeTab === 'disability' && <DisabilityTab />}
+                        {activeTab === 'intowork' && <IntoWorkTab />}
+                        {activeTab === 'correlations' && <CorrelationsTab scatterX={scatterX} setScatterX={setScatterX} scatterY={scatterY} setScatterY={setScatterY} />}
+                        {activeTab === 'lmtypes' && <LabourMarketTypesTab />}
+                        {activeTab === 'methodology' && <MethodologyTab />}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
