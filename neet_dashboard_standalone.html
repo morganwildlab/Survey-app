@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEET Dashboard: Youth Inactivity & Labour Market Insights</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #333; }
+        .dashboard { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: #2c3e50; color: white; padding: 20px; position: fixed; height: 100vh; overflow-y: auto; }
+        .sidebar h1 { font-size: 1.1rem; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #4a6278; }
+        .sidebar-section { margin-bottom: 20px; }
+        .sidebar-section h3 { font-size: 0.8rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 8px; }
+        .sidebar-section p { font-size: 0.75rem; color: #bdc3c7; line-height: 1.4; margin-bottom: 5px; }
+        .main-content { margin-left: 260px; flex: 1; padding: 20px; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { padding: 10px 16px; background: white; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 0.85rem; }
+        .tab:hover { background: #e8f4f8; }
+        .tab.active { background: #3498db; color: white; }
+        .value-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .value-box { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .value-box.danger { border-left: 4px solid #e74c3c; }
+        .value-box.warning { border-left: 4px solid #f39c12; }
+        .value-box.info { border-left: 4px solid #3498db; }
+        .value-box.success { border-left: 4px solid #27ae60; }
+        .value-box h4 { font-size: 0.8rem; color: #7f8c8d; margin-bottom: 5px; }
+        .value-box .value { font-size: 1.8rem; font-weight: bold; color: #2c3e50; }
+        .cards { display: grid; gap: 20px; margin-bottom: 20px; }
+        .cards-2 { grid-template-columns: repeat(2, 1fr); }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+        .card-header { padding: 12px 18px; background: #f8f9fa; border-bottom: 1px solid #eee; font-weight: 600; font-size: 0.9rem; }
+        .card-body { padding: 18px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; position: sticky; top: 0; }
+        tr:hover { background: #f8f9fa; }
+        .table-container { max-height: 400px; overflow-y: auto; }
+        .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+        .bar-row { display: flex; align-items: center; gap: 10px; }
+        .bar-label { width: 120px; font-size: 0.75rem; text-align: right; }
+        .bar-container { flex: 1; height: 24px; background: #eee; border-radius: 4px; overflow: hidden; }
+        .bar { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color: white; font-size: 0.7rem; font-weight: 600; }
+        .bar-value { width: 50px; font-size: 0.75rem; text-align: left; }
+        .stat-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 12px; }
+        .stat-box h5 { margin-bottom: 8px; color: #2c3e50; font-size: 0.85rem; }
+        .stat-box p { font-size: 0.8rem; color: #555; margin: 4px 0; }
+        .trend-up { color: #e74c3c; }
+        .trend-down { color: #27ae60; }
+        .hidden { display: none; }
+        .methodology h4 { color: #2c3e50; margin: 18px 0 8px; font-size: 1rem; }
+        .methodology h5 { color: #34495e; margin: 12px 0 6px; font-size: 0.9rem; }
+        .methodology p, .methodology li { color: #555; line-height: 1.5; margin-bottom: 6px; font-size: 0.85rem; }
+        .methodology ul { margin-left: 20px; }
+        .methodology a { color: #3498db; }
+        .map-placeholder { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; padding: 40px; color: white; text-align: center; min-height: 400px; display: flex; flex-direction: column; justify-content: center; }
+        .map-placeholder h3 { margin-bottom: 20px; }
+        .map-legend { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+        .map-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; }
+        .map-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; }
+        select { padding: 8px 12px; border-radius: 4px; border: 1px solid #ddd; font-size: 0.85rem; margin-bottom: 15px; }
+        @media (max-width: 1000px) { .cards-2 { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .sidebar { width: 100%; height: auto; position: relative; } .main-content { margin-left: 0; } .dashboard { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="sidebar">
+            <h1>NEET Dashboard</h1>
+            <div class="sidebar-section">
+                <h3>Data Sources</h3>
+                <p><strong>Get Britain Working</strong><br>DWP, January 2026</p>
+                <p><strong>NEET Statistics</strong><br>DfE, Calendar Year 2024</p>
+                <p><strong>Young People NEET</strong><br>ONS, February 2025</p>
+            </div>
+            <div class="sidebar-section">
+                <h3>Key Findings</h3>
+                <p>NEET rose to <strong>958k</strong> (12.9%) in 2025 Q4</p>
+                <p>Youth disability inactivity up <strong>160%</strong> since 2015</p>
+                <p>Into-work rates fall <strong>75%</strong> after 24 months on UC</p>
+            </div>
+            <div class="sidebar-section">
+                <h3>About</h3>
+                <p>Exploring NEET concentrations, youth disability inactivity, and labour market outcomes across the UK.</p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('overview')">Overview</button>
+                <button class="tab" onclick="showTab('maps')">Geographic Maps</button>
+                <button class="tab" onclick="showTab('disability')">Youth Disability</button>
+                <button class="tab" onclick="showTab('intowork')">Into-Work Rates</button>
+                <button class="tab" onclick="showTab('lmtypes')">Labour Market Types</button>
+                <button class="tab" onclick="showTab('methodology')">Methodology</button>
+            </div>
+
+            <!-- OVERVIEW TAB -->
+            <div id="overview" class="tab-content">
+                <div class="value-boxes">
+                    <div class="value-box danger">
+                        <h4>NEET Total (16-24)</h4>
+                        <div class="value">958k</div>
+                    </div>
+                    <div class="value-box warning">
+                        <h4>NEET Rate</h4>
+                        <div class="value">12.9%</div>
+                    </div>
+                    <div class="value-box info">
+                        <h4>Youth Disability Inactive</h4>
+                        <div class="value">325k</div>
+                    </div>
+                    <div class="value-box success">
+                        <h4>Into-Work Rate (UC)</h4>
+                        <div class="value">7.4%</div>
+                    </div>
+                </div>
+
+                <div class="cards cards-2">
+                    <div class="card">
+                        <div class="card-header">NEET Trends: National Time Series (thousands)</div>
+                        <div class="card-body">
+                            <table>
+                                <tr><th>Quarter</th><th>Total NEET</th><th>Unemployed</th><th>Inactive</th><th>Change</th></tr>
+                                <tr><td>2019 Q4</td><td>791</td><td>318</td><td>473</td><td>-</td></tr>
+                                <tr><td>2020 Q2</td><td>892</td><td>412</td><td>480</td><td class="trend-up">+12.8%</td></tr>
+                                <tr><td>2021 Q4</td><td>788</td><td>322</td><td>466</td><td class="trend-down">-11.7%</td></tr>
+                                <tr><td>2022 Q4</td><td>768</td><td>295</td><td>473</td><td class="trend-down">-2.5%</td></tr>
+                                <tr><td>2023 Q4</td><td>842</td><td>362</td><td>480</td><td class="trend-up">+9.6%</td></tr>
+                                <tr><td>2024 Q4</td><td>987</td><td>448</td><td>539</td><td class="trend-up">+17.2%</td></tr>
+                                <tr><td>2025 Q4</td><td>958</td><td>418</td><td>540</td><td class="trend-down">-2.9%</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Current NEET Breakdown (2025 Q4)</div>
+                        <div class="card-body">
+                            <div class="stat-box">
+                                <h5>Unemployed NEET</h5>
+                                <p><strong>418,000</strong> (43.6% of NEET)</p>
+                                <p>Seeking work and available</p>
+                            </div>
+                            <div class="stat-box">
+                                <h5>Inactive - Disability/Health</h5>
+                                <p><strong>325,000</strong> (33.9% of NEET)</p>
+                                <p>Long-term sick or disabled</p>
+                            </div>
+                            <div class="stat-box">
+                                <h5>Inactive - Other Reasons</h5>
+                                <p><strong>215,000</strong> (22.4% of NEET)</p>
+                                <p>Caring, discouraged, other</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAPS TAB -->
+            <div id="maps" class="tab-content hidden">
+                <div class="cards cards-2">
+                    <div class="card">
+                        <div class="card-header">Local Authority NEET Rates (16-17)</div>
+                        <div class="card-body">
+                            <div class="map-placeholder">
+                                <h3>UK Local Authority Map</h3>
+                                <p>NEET rates vary significantly by area</p>
+                                <div class="map-legend">
+                                    <div class="map-legend-item"><div class="map-dot" style="background:#27ae60"></div> Low (2-4%)</div>
+                                    <div class="map-legend-item"><div class="map-dot" style="background:#f39c12"></div> Medium (5-7%)</div>
+                                    <div class="map-legend-item"><div class="map-dot" style="background:#e74c3c"></div> High (8%+)</div>
+                                </div>
+                                <p style="margin-top:20px;font-size:0.8rem">Highest: Blaenau Gwent (10.5%) | Lowest: Cambridge (2.8%)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">NEET Rate by Region</div>
+                        <div class="card-body">
+                            <div class="bar-chart">
+                                <div class="bar-row"><span class="bar-label">North East</span><div class="bar-container"><div class="bar" style="width:100%;background:#e74c3c">14.8%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">West Midlands</span><div class="bar-container"><div class="bar" style="width:93%;background:#e74c3c">13.8%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">Wales</span><div class="bar-container"><div class="bar" style="width:91%;background:#e74c3c">13.5%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">North West</span><div class="bar-container"><div class="bar" style="width:89%;background:#f39c12">13.2%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">Yorkshire</span><div class="bar-container"><div class="bar" style="width:86%;background:#f39c12">12.8%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">London</span><div class="bar-container"><div class="bar" style="width:84%;background:#f39c12">12.5%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">N. Ireland</span><div class="bar-container"><div class="bar" style="width:82%;background:#f39c12">12.2%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">Scotland</span><div class="bar-container"><div class="bar" style="width:80%;background:#f39c12">11.8%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">East Midlands</span><div class="bar-container"><div class="bar" style="width:78%;background:#27ae60">11.5%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">South West</span><div class="bar-container"><div class="bar" style="width:71%;background:#27ae60">10.5%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">East of England</span><div class="bar-container"><div class="bar" style="width:69%;background:#27ae60">10.2%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">South East</span><div class="bar-container"><div class="bar" style="width:66%;background:#27ae60">9.8%</div></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Local Authority Rankings</div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <tr><th>Local Authority</th><th>Region</th><th>NEET Rate</th><th>Youth Opp. Index</th><th>Into-Work</th><th>Disability</th></tr>
+                                <tr><td>Blaenau Gwent</td><td>Wales</td><td style="color:#e74c3c">10.5%</td><td>25</td><td>4.8%</td><td>12.2%</td></tr>
+                                <tr><td>Blackpool</td><td>North West</td><td style="color:#e74c3c">8.2%</td><td>23</td><td>5.2%</td><td>10.5%</td></tr>
+                                <tr><td>Torbay</td><td>South West</td><td style="color:#e74c3c">7.8%</td><td>35</td><td>5.5%</td><td>9.2%</td></tr>
+                                <tr><td>Barnsley</td><td>Yorkshire</td><td style="color:#f39c12">7.5%</td><td>35</td><td>6.2%</td><td>9.8%</td></tr>
+                                <tr><td>Barking & Dag.</td><td>London</td><td style="color:#f39c12">7.5%</td><td>38</td><td>6.2%</td><td>7.2%</td></tr>
+                                <tr><td>Middlesbrough</td><td>North East</td><td style="color:#f39c12">7.2%</td><td>32</td><td>5.8%</td><td>9.5%</td></tr>
+                                <tr><td>Glasgow</td><td>Scotland</td><td style="color:#f39c12">6.8%</td><td>48</td><td>6.5%</td><td>8.5%</td></tr>
+                                <tr><td>Nottingham</td><td>East Midlands</td><td style="color:#f39c12">6.8%</td><td>45</td><td>6.8%</td><td>8.5%</td></tr>
+                                <tr><td>Liverpool</td><td>North West</td><td style="color:#f39c12">6.5%</td><td>45</td><td>6.8%</td><td>8.2%</td></tr>
+                                <tr><td>Birmingham</td><td>West Midlands</td><td style="color:#f39c12">6.2%</td><td>48</td><td>6.8%</td><td>8.2%</td></tr>
+                                <tr><td>Edinburgh</td><td>Scotland</td><td style="color:#27ae60">4.5%</td><td>68</td><td>8.2%</td><td>5.8%</td></tr>
+                                <tr><td>Westminster</td><td>London</td><td style="color:#27ae60">3.8%</td><td>72</td><td>8.8%</td><td>4.8%</td></tr>
+                                <tr><td>Cambridge</td><td>East</td><td style="color:#27ae60">2.8%</td><td>78</td><td>9.5%</td><td>4.2%</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DISABILITY TAB -->
+            <div id="disability" class="tab-content hidden">
+                <div class="cards cards-2">
+                    <div class="card">
+                        <div class="card-header">Rise in Youth Health-Related Inactivity (16-24)</div>
+                        <div class="card-body">
+                            <table>
+                                <tr><th>Year</th><th>Long-term Sick (k)</th><th>% of 16-24</th><th>Change</th></tr>
+                                <tr><td>2015</td><td>125</td><td>1.8%</td><td>-</td></tr>
+                                <tr><td>2017</td><td>142</td><td>2.0%</td><td class="trend-up">+13.6%</td></tr>
+                                <tr><td>2019</td><td>168</td><td>2.4%</td><td class="trend-up">+18.3%</td></tr>
+                                <tr><td>2021</td><td>212</td><td>3.0%</td><td class="trend-up">+26.2%</td></tr>
+                                <tr><td>2023</td><td>278</td><td>3.9%</td><td class="trend-up">+31.1%</td></tr>
+                                <tr><td>2025</td><td>325</td><td>4.6%</td><td class="trend-up">+16.9%</td></tr>
+                            </table>
+                            <div class="stat-box" style="margin-top:15px">
+                                <p><strong>Total increase 2015-2025: +160%</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Health Conditions Breakdown (2025)</div>
+                        <div class="card-body">
+                            <div class="stat-box">
+                                <h5>Mental Health Conditions</h5>
+                                <p><strong>218,000</strong> (67% of health inactive)</p>
+                                <p>Up 319% since 2015</p>
+                            </div>
+                            <div class="stat-box">
+                                <h5>Musculoskeletal Conditions</h5>
+                                <p><strong>42,000</strong> (13% of health inactive)</p>
+                                <p>Up 133% since 2015</p>
+                            </div>
+                            <div class="stat-box">
+                                <h5>Other Health Conditions</h5>
+                                <p><strong>65,000</strong> (20% of health inactive)</p>
+                                <p>Up 18% since 2015</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Youth Disability Rate by Region</div>
+                    <div class="card-body">
+                        <div class="bar-chart">
+                            <div class="bar-row"><span class="bar-label">North East</span><div class="bar-container"><div class="bar" style="width:100%;background:#e74c3c">8.5%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">Wales</span><div class="bar-container"><div class="bar" style="width:92%;background:#e74c3c">7.8%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">West Midlands</span><div class="bar-container"><div class="bar" style="width:88%;background:#f39c12">7.5%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">North West</span><div class="bar-container"><div class="bar" style="width:85%;background:#f39c12">7.2%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">Scotland</span><div class="bar-container"><div class="bar" style="width:85%;background:#f39c12">7.2%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">Yorkshire</span><div class="bar-container"><div class="bar" style="width:80%;background:#f39c12">6.8%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">N. Ireland</span><div class="bar-container"><div class="bar" style="width:80%;background:#f39c12">6.8%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">East Midlands</span><div class="bar-container"><div class="bar" style="width:73%;background:#27ae60">6.2%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">South West</span><div class="bar-container"><div class="bar" style="width:73%;background:#27ae60">6.2%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">East of England</span><div class="bar-container"><div class="bar" style="width:68%;background:#27ae60">5.8%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">South East</span><div class="bar-container"><div class="bar" style="width:65%;background:#27ae60">5.5%</div></div></div>
+                            <div class="bar-row"><span class="bar-label">London</span><div class="bar-container"><div class="bar" style="width:61%;background:#27ae60">5.2%</div></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INTO-WORK TAB -->
+            <div id="intowork" class="tab-content hidden">
+                <div class="cards cards-2">
+                    <div class="card">
+                        <div class="card-header">Into-Work Rate by Duration on UC</div>
+                        <div class="card-body">
+                            <div class="bar-chart">
+                                <div class="bar-row"><span class="bar-label">0-3 months</span><div class="bar-container"><div class="bar" style="width:100%;background:#27ae60">12.5%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">3-6 months</span><div class="bar-container"><div class="bar" style="width:66%;background:#3498db">8.2%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">6-12 months</span><div class="bar-container"><div class="bar" style="width:49%;background:#f39c12">6.1%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">12-24 months</span><div class="bar-container"><div class="bar" style="width:36%;background:#e67e22">4.5%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">24+ months</span><div class="bar-container"><div class="bar" style="width:26%;background:#e74c3c">3.2%</div></div></div>
+                            </div>
+                            <div class="stat-box" style="margin-top:15px">
+                                <p>Into-work rates <strong>decline 74%</strong> from 0-3 months to 24+ months on UC</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Into-Work Rate by Age Group</div>
+                        <div class="card-body">
+                            <div class="bar-chart">
+                                <div class="bar-row"><span class="bar-label">Under 25</span><div class="bar-container"><div class="bar" style="width:100%;background:#27ae60">9.8%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">25-34</span><div class="bar-container"><div class="bar" style="width:84%;background:#3498db">8.2%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">35-44</span><div class="bar-container"><div class="bar" style="width:72%;background:#f39c12">7.1%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">45-54</span><div class="bar-container"><div class="bar" style="width:63%;background:#e67e22">6.2%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">55+</span><div class="bar-container"><div class="bar" style="width:49%;background:#e74c3c">4.8%</div></div></div>
+                            </div>
+                            <div class="stat-box" style="margin-top:15px">
+                                <p>Under-25s have the <strong>highest into-work rate</strong>, supporting early intervention</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cards cards-2">
+                    <div class="card">
+                        <div class="card-header">Seasonality in Into-Work Rates</div>
+                        <div class="card-body">
+                            <table>
+                                <tr><th>Month</th><th>Rate</th><th>Pattern</th></tr>
+                                <tr><td>January</td><td>6.8%</td><td>Post-holiday low</td></tr>
+                                <tr><td>April</td><td style="color:#27ae60"><strong>8.5%</strong></td><td>Spring peak</td></tr>
+                                <tr><td>July</td><td>7.2%</td><td>Summer dip</td></tr>
+                                <tr><td>October</td><td style="color:#27ae60"><strong>8.8%</strong></td><td>Autumn peak</td></tr>
+                                <tr><td>December</td><td style="color:#e74c3c">6.2%</td><td>Year low</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Into-Work Rate by Family Type</div>
+                        <div class="card-body">
+                            <div class="bar-chart">
+                                <div class="bar-row"><span class="bar-label">Single, no children</span><div class="bar-container"><div class="bar" style="width:100%;background:#27ae60">8.5%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">Couple, no children</span><div class="bar-container"><div class="bar" style="width:92%;background:#3498db">7.8%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">Couple, with children</span><div class="bar-container"><div class="bar" style="width:80%;background:#f39c12">6.8%</div></div></div>
+                                <div class="bar-row"><span class="bar-label">Single, with children</span><div class="bar-container"><div class="bar" style="width:61%;background:#e74c3c">5.2%</div></div></div>
+                            </div>
+                            <div class="stat-box" style="margin-top:15px">
+                                <p>Single parents face the <strong>lowest into-work rates</strong>, highlighting childcare barriers</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LABOUR MARKET TYPES TAB -->
+            <div id="lmtypes" class="tab-content hidden">
+                <div class="card" style="margin-bottom:20px">
+                    <div class="card-body">
+                        <p>Get Britain Working identifies <strong>14 distinct local labour market types</strong> based on cluster analysis of: UC jobseeker volumes, employment rates, work-limiting disability prevalence, educational qualifications, musculoskeletal conditions, and mental health prevalence.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Labour Market Type Profiles</div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <tr><th>Type</th><th>Name</th><th>Description</th><th>Avg NEET</th><th>Into-Work</th></tr>
+                                <tr><td>1</td><td><strong>London Central</strong></td><td>High UC volumes, high employment, young population</td><td>4.8%</td><td>8.0%</td></tr>
+                                <tr><td>2</td><td><strong>London Outer</strong></td><td>Mixed suburban, good employment, lower disability</td><td>6.2%</td><td>7.2%</td></tr>
+                                <tr><td>3</td><td><strong>Prosperous South</strong></td><td>High employment, low UC, high qualifications</td><td>4.2%</td><td>8.5%</td></tr>
+                                <tr><td>4</td><td><strong>University Cities</strong></td><td>High student population, variable NEET</td><td>4.5%</td><td>8.8%</td></tr>
+                                <tr><td>5</td><td><strong>Rural/Coastal</strong></td><td>Low population density, higher into-work rates</td><td>5.5%</td><td style="color:#27ae60"><strong>9.2%</strong></td></tr>
+                                <tr><td>6</td><td><strong>Post-Industrial North</strong></td><td>High disability, lower employment, legacy industries</td><td>6.8%</td><td>6.5%</td></tr>
+                                <tr><td>7</td><td><strong>Coastal Deprivation</strong></td><td>High NEET, seasonal employment, older demographics</td><td style="color:#e74c3c">7.8%</td><td>5.5%</td></tr>
+                                <tr><td>8</td><td><strong>Welsh Valleys</strong></td><td>High incapacity, post-mining, tight labour markets</td><td style="color:#e74c3c"><strong>9.2%</strong></td><td style="color:#e74c3c">5.0%</td></tr>
+                                <tr><td>9</td><td><strong>Scottish Urban</strong></td><td>Mixed outcomes, devolved policy context</td><td>6.0%</td><td>7.2%</td></tr>
+                                <tr><td>10</td><td><strong>Midlands Manufacturing</strong></td><td>Variable employment, automotive/logistics</td><td>5.8%</td><td>7.2%</td></tr>
+                                <tr><td>11</td><td><strong>Northern Towns</strong></td><td>Mixed NEET, regeneration areas</td><td>6.2%</td><td>7.0%</td></tr>
+                                <tr><td>12</td><td><strong>East Midlands Mixed</strong></td><td>Variable outcomes, mixed economy</td><td>6.5%</td><td>6.8%</td></tr>
+                                <tr><td>13</td><td><strong>South Wales Coast</strong></td><td>Port cities, tourism, manufacturing mix</td><td>5.8%</td><td>7.2%</td></tr>
+                                <tr><td>14</td><td><strong>Scottish Highlands</strong></td><td>Remote rural, distinctive labour markets</td><td>5.2%</td><td>7.8%</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- METHODOLOGY TAB -->
+            <div id="methodology" class="tab-content hidden">
+                <div class="card">
+                    <div class="card-body methodology">
+                        <h4>Data Sources</h4>
+
+                        <h5>Get Britain Working: Labour Market Insights</h5>
+                        <p>Published by DWP quarterly, starting October 2025. The January 2026 release provides:</p>
+                        <ul>
+                            <li>UC 'Searching for work' into-work rates by geography, duration, age, and family type</li>
+                            <li>14 local labour market types based on cluster analysis</li>
+                            <li>Employment sector distributions for UC recipients</li>
+                            <li>Health journey and work capability data</li>
+                        </ul>
+                        <p><a href="https://www.gov.uk/government/statistics/get-britain-working-labour-market-insights-january-2026" target="_blank">Access the full release</a></p>
+
+                        <h5>NEET Statistics Annual Brief</h5>
+                        <p>Published by DfE, provides 16-17 NEET estimates by local authority. Key caveats:</p>
+                        <ul>
+                            <li>NCCIS figures include 'not known' activity, which may overestimate NEET</li>
+                            <li>'Not known' proportions vary by local authority, complicating comparisons</li>
+                            <li>Different methodologies apply to 16-17 (admin data) vs 18-24 (survey data)</li>
+                        </ul>
+
+                        <h5>ONS Young People NEET Bulletin</h5>
+                        <p>Quarterly bulletin for 16-24 NEET based on Labour Force Survey. Notes:</p>
+                        <ul>
+                            <li>LFS data quality issues in 2023 led to temporary suspension</li>
+                            <li>Reintroduced estimates from February 2024 should be treated with caution</li>
+                            <li>Regional estimates have wider confidence intervals</li>
+                        </ul>
+
+                        <h5>Youth Opportunity Index</h5>
+                        <p>Developed by Impetus, measuring education and employment opportunities at LA level. Scores range from 0-100, with higher scores indicating better opportunities.</p>
+
+                        <h4>Definitions</h4>
+
+                        <h5>NEET</h5>
+                        <p>Not in Education, Employment, or Training. Includes both:</p>
+                        <ul>
+                            <li><strong>Unemployed NEET:</strong> Seeking work and available</li>
+                            <li><strong>Inactive NEET:</strong> Not seeking work (reasons include disability, caring responsibilities, discouragement)</li>
+                        </ul>
+
+                        <h5>Into-Work Rate</h5>
+                        <p>From GBW: "The proportion of UC Searching for work regime customers who have earnings in one assessment period who did not have earnings in the preceding assessment period."</p>
+
+                        <h5>Labour Market Types</h5>
+                        <p>14 clusters identified using k-means clustering on 6 standardized variables. Types range from 'London Central' (high employment, young population) to 'Welsh Valleys' (high incapacity, tight labour markets).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(function(el) {
+                el.classList.add('hidden');
+            });
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            // Show selected tab
+            document.getElementById(tabId).classList.remove('hidden');
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
