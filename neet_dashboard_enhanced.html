@@ -1446,6 +1446,13 @@
         let markers = [];
 
         function initMap() {
+            // Check if Leaflet loaded
+            if (typeof L === 'undefined') {
+                console.warn('Leaflet not loaded - map unavailable');
+                document.getElementById('map').innerHTML = '<p style="padding:20px;color:#999;">Map unavailable - Leaflet library not loaded</p>';
+                return;
+            }
+
             map = L.map('map').setView([54.5, -2.5], 6);
 
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
@@ -1805,6 +1812,12 @@
         let charts = {};
 
         function initCharts() {
+            // Check if Chart.js loaded
+            if (typeof Chart === 'undefined') {
+                console.warn('Chart.js not loaded - charts unavailable');
+                return;
+            }
+
             initRegionalChart();
             initScatterChart();
             initTrendChart();
@@ -2611,12 +2624,18 @@
         // ============================================================================
 
         async function checkStatXploreConnection() {
+            // Set a timeout to avoid hanging on blocked networks
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
             try {
                 const response = await fetch('https://stat-xplore.dwp.gov.uk/webapi/rest/v1/info', {
                     headers: {
                         'APIKey': STAT_XPLORE_API_KEY
-                    }
+                    },
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
 
                 if (response.ok) {
                     document.getElementById('apiStatus').className = 'api-status connected';
@@ -2627,6 +2646,7 @@
                     throw new Error('API error');
                 }
             } catch (e) {
+                clearTimeout(timeoutId);
                 document.getElementById('apiStatus').className = 'api-status disconnected';
                 document.getElementById('apiStatus').textContent = '● Stat-Xplore: Using cached data';
                 document.getElementById('statXploreStatus').textContent = 'Using cached data';
@@ -2654,6 +2674,13 @@
 
         function initTimeSlider() {
             const slider = document.getElementById('timeSlider');
+
+            // Check if noUiSlider loaded (might be blocked by network)
+            if (typeof noUiSlider === 'undefined') {
+                console.warn('noUiSlider not loaded - using fallback');
+                slider.innerHTML = '<p style="color:#999;font-size:0.8rem;">Time slider unavailable</p>';
+                return;
+            }
 
             noUiSlider.create(slider, {
                 start: [historicNEET.quarters.length - 1],
@@ -2718,11 +2745,36 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Initializing dashboard...');
 
-            initMap();
-            initCharts();
-            initTimeSlider();
+            try {
+                initMap();
+                console.log('Map initialized');
+            } catch(e) {
+                console.error('Map init error:', e);
+            }
+
+            try {
+                initCharts();
+                console.log('Charts initialized');
+            } catch(e) {
+                console.error('Charts init error:', e);
+            }
+
+            try {
+                initTimeSlider();
+                console.log('Time slider initialized');
+            } catch(e) {
+                console.error('Time slider init error:', e);
+            }
+
+            // Don't await - let it run in background
             checkStatXploreConnection();
-            updatePrediction();
+
+            try {
+                updatePrediction();
+                console.log('Predictions initialized');
+            } catch(e) {
+                console.error('Prediction init error:', e);
+            }
 
             // Tab event listeners
             document.querySelectorAll('.tab').forEach(tab => {
