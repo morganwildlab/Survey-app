@@ -379,12 +379,12 @@
         <!-- Main Content -->
         <main class="main">
             <div class="tabs">
-                <button class="tab active" onclick="showTab('maps')">🗺️ Geographic Maps</button>
-                <button class="tab" onclick="showTab('trends')">📈 Historic Trends</button>
-                <button class="tab" onclick="showTab('predictions')">🔮 Predictions</button>
-                <button class="tab" onclick="showTab('crosstabs')">📊 Crosstabs</button>
-                <button class="tab" onclick="showTab('intowork')">💼 Into-Work Analysis</button>
-                <button class="tab" onclick="showTab('methodology')">📋 Methodology</button>
+                <button class="tab active" data-tab="maps">🗺️ Geographic Maps</button>
+                <button class="tab" data-tab="trends">📈 Historic Trends</button>
+                <button class="tab" data-tab="predictions">🔮 Predictions</button>
+                <button class="tab" data-tab="crosstabs">📊 Crosstabs</button>
+                <button class="tab" data-tab="intowork">💼 Into-Work Analysis</button>
+                <button class="tab" data-tab="methodology">📋 Methodology</button>
             </div>
 
             <!-- MAPS TAB -->
@@ -1783,17 +1783,26 @@
         // TAB NAVIGATION
         // ============================================================================
 
-        function showTab(tabId) {
+        function showTab(tabId, clickedTab) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
 
             document.getElementById(tabId).classList.remove('hidden');
-            event.target.classList.add('active');
+            if (clickedTab) {
+                clickedTab.classList.add('active');
+            }
 
             // Resize charts when tab becomes visible
             if (tabId === 'maps' && map) {
                 setTimeout(() => map.invalidateSize(), 100);
             }
+
+            // Resize any visible charts
+            setTimeout(() => {
+                Object.values(charts).forEach(chart => {
+                    if (chart && chart.resize) chart.resize();
+                });
+            }, 100);
         }
 
         // ============================================================================
@@ -1801,14 +1810,47 @@
         // ============================================================================
 
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing dashboard...');
+
             initMap();
             initCharts();
             initTimeSlider();
             checkStatXploreConnection();
             updatePrediction();
 
-            // Event listeners
+            // Tab event listeners
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabId = this.getAttribute('data-tab');
+                    console.log('Switching to tab:', tabId);
+                    showTab(tabId, this);
+                });
+            });
+
+            // Map control event listeners
+            document.getElementById('mapIndicator').addEventListener('change', updateMap);
+            document.getElementById('mapStyle').addEventListener('change', updateMapStyle);
+            document.getElementById('showLabels').addEventListener('change', updateMap);
+            document.getElementById('showTrends').addEventListener('change', updateMap);
             document.getElementById('regionFilter').addEventListener('change', updateMap);
+            document.getElementById('ageFilter').addEventListener('change', updateMap);
+
+            // Trend metric selector
+            document.getElementById('trendMetric').addEventListener('change', updateTrendChart);
+
+            // Prediction sliders
+            document.getElementById('sendGrowth').addEventListener('input', updatePrediction);
+            document.getElementById('dlaGrowth').addEventListener('input', updatePrediction);
+            document.getElementById('jobDecline').addEventListener('input', updatePrediction);
+            document.getElementById('aiDisplacement').addEventListener('input', updatePrediction);
+
+            // Crosstab controls
+            document.getElementById('crosstabDataset').addEventListener('change', fetchCrosstab);
+            document.getElementById('crosstabRow').addEventListener('change', fetchCrosstab);
+            document.getElementById('crosstabCol').addEventListener('change', fetchCrosstab);
+
+            console.log('Dashboard initialized successfully');
         });
     </script>
 </body>
