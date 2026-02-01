@@ -186,9 +186,23 @@
             gap: 16px;
             margin-top: 16px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
         .legend-color { width: 20px; height: 20px; border-radius: 4px; }
+        .legend-gradient {
+            width: 200px;
+            height: 20px;
+            border-radius: 4px;
+            margin: 0 8px;
+        }
+        .legend-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 200px;
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
 
         .info-panel {
             background: white;
@@ -429,8 +443,8 @@
                                 <option value="change">NEET Change (1yr)</option>
                             </select>
                             <select id="mapStyle" onchange="updateMapStyle()">
+                                <option value="choropleth" selected>Filled Areas (Choropleth)</option>
                                 <option value="circles">Circle Markers</option>
-                                <option value="choropleth">Choropleth (Regions)</option>
                                 <option value="heatmap">Heat Intensity</option>
                             </select>
                             <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;">
@@ -1251,12 +1265,13 @@
         function initMap() {
             map = L.map('map').setView([54.5, -2.5], 6);
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
                 maxZoom: 19
             }).addTo(map);
 
-            updateMap();
+            // Default to choropleth view
+            renderChoroplethMap();
         }
 
         function updateMap() {
@@ -1286,26 +1301,18 @@
             // Add markers
             data.forEach(la => {
                 const value = la[indicator];
-                const normalized = (value - minVal) / (maxVal - minVal);
-
-                // Color scale
-                let hue;
-                if (higherIsBetter) {
-                    hue = normalized * 120; // Green for high
-                } else {
-                    hue = (1 - normalized) * 120; // Green for low
-                }
-                const color = `hsl(${hue}, 70%, 45%)`;
+                const normalized = maxVal !== minVal ? (value - minVal) / (maxVal - minVal) : 0.5;
+                const color = getColorScale(normalized, higherIsBetter);
 
                 // Size based on value
-                const radius = 8 + normalized * 12;
+                const radius = 10 + normalized * 15;
 
                 const marker = L.circleMarker([la.lat, la.lng], {
                     radius: radius,
                     fillColor: color,
                     color: '#fff',
                     weight: 2,
-                    fillOpacity: 0.8
+                    fillOpacity: 0.9
                 }).addTo(map);
 
                 // Popup
@@ -1344,7 +1351,7 @@
             });
 
             // Update legend
-            updateMapLegend(indicator, minVal, maxVal, higherIsBetter);
+            updateChoroplethLegend(indicator, minVal, maxVal, higherIsBetter);
         }
 
         function updateMapLegend(indicator, minVal, maxVal, higherIsBetter) {
@@ -1366,6 +1373,50 @@
             `;
         }
 
+        function updateChoroplethLegend(indicator, minVal, maxVal, higherIsBetter) {
+            const legend = document.getElementById('mapLegend');
+            const indicatorLabels = {
+                neetRate: 'NEET Rate (%)',
+                youthDisability: 'Youth Disability Rate (%)',
+                intoWorkRate: 'Into-Work Rate (%)',
+                mentalHealth: 'Mental Health Prevalence (%)',
+                yoi: 'Youth Opportunity Index',
+                change: 'NEET Change (pp)'
+            };
+
+            // Create gradient stops
+            const gradientColors = [];
+            for (let i = 0; i <= 10; i++) {
+                gradientColors.push(getColorScale(i / 10, higherIsBetter));
+            }
+            const gradient = `linear-gradient(to right, ${gradientColors.join(', ')})`;
+
+            // Calculate intermediate values
+            const range = maxVal - minVal;
+            const q1 = minVal + range * 0.25;
+            const mid = minVal + range * 0.5;
+            const q3 = minVal + range * 0.75;
+
+            legend.innerHTML = `
+                <div style="display:flex;flex-direction:column;width:100%;">
+                    <div style="display:flex;align-items:center;margin-bottom:8px;">
+                        <span style="font-weight:600;margin-right:16px;">${indicatorLabels[indicator]}</span>
+                        <span style="font-size:0.8rem;color:#666;">${higherIsBetter ? '(higher = better)' : '(lower = better)'}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;">
+                        <span style="font-size:0.85rem;font-weight:500;min-width:50px;">${minVal.toFixed(1)}</span>
+                        <div class="legend-gradient" style="background:${gradient};flex:1;max-width:400px;height:24px;border-radius:4px;border:1px solid #ddd;"></div>
+                        <span style="font-size:0.85rem;font-weight:500;min-width:50px;text-align:right;">${maxVal.toFixed(1)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;max-width:500px;margin-top:4px;padding:0 50px;">
+                        <span style="font-size:0.75rem;color:#666;">${q1.toFixed(1)}</span>
+                        <span style="font-size:0.75rem;color:#666;">${mid.toFixed(1)}</span>
+                        <span style="font-size:0.75rem;color:#666;">${q3.toFixed(1)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
         function updateMapStyle() {
             const style = document.getElementById('mapStyle').value;
 
@@ -1382,68 +1433,130 @@
             }
         }
 
+        // Color scales for choropleth
+        function getColorScale(normalized, higherIsBetter) {
+            // Use a professional diverging color scale
+            // For "bad is high" metrics (NEET rate, disability): green → yellow → orange → red
+            // For "good is high" metrics (into-work, YOI): red → yellow → green
+
+            let r, g, b;
+
+            if (higherIsBetter) {
+                // Red to Green (low=bad, high=good)
+                if (normalized < 0.25) {
+                    r = 220; g = 53 + normalized * 4 * 100; b = 69;
+                } else if (normalized < 0.5) {
+                    r = 220 - (normalized - 0.25) * 4 * 30; g = 153; b = 69 - (normalized - 0.25) * 4 * 30;
+                } else if (normalized < 0.75) {
+                    r = 190 - (normalized - 0.5) * 4 * 90; g = 153 + (normalized - 0.5) * 4 * 50; b = 39;
+                } else {
+                    r = 100 - (normalized - 0.75) * 4 * 60; g = 203; b = 39 + (normalized - 0.75) * 4 * 60;
+                }
+            } else {
+                // Green to Red (low=good, high=bad) - Classic traffic light
+                if (normalized < 0.2) {
+                    // Deep green
+                    r = 34; g = 139; b = 34;
+                } else if (normalized < 0.4) {
+                    // Light green to yellow-green
+                    const t = (normalized - 0.2) / 0.2;
+                    r = 34 + t * 120; g = 139 + t * 60; b = 34 - t * 20;
+                } else if (normalized < 0.6) {
+                    // Yellow-green to yellow
+                    const t = (normalized - 0.4) / 0.2;
+                    r = 154 + t * 101; g = 199 + t * 56; b = 14 - t * 14;
+                } else if (normalized < 0.8) {
+                    // Yellow to orange
+                    const t = (normalized - 0.6) / 0.2;
+                    r = 255; g = 255 - t * 90; b = 0;
+                } else {
+                    // Orange to red
+                    const t = (normalized - 0.8) / 0.2;
+                    r = 255 - t * 35; g = 165 - t * 100; b = 0;
+                }
+            }
+
+            return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+        }
+
         function renderChoroplethMap() {
             const indicator = document.getElementById('mapIndicator').value;
             const regionFilter = document.getElementById('regionFilter').value;
+            const showLabels = document.getElementById('showLabels').checked;
 
-            // Aggregate data by region
-            const regionData = {};
-            localAuthorities.forEach(la => {
-                if (regionFilter !== 'all' && la.region !== regionFilter) return;
-                if (!regionData[la.region]) {
-                    regionData[la.region] = { sum: 0, count: 0, lats: [], lngs: [] };
-                }
-                regionData[la.region].sum += la[indicator];
-                regionData[la.region].count++;
-                regionData[la.region].lats.push(la.lat);
-                regionData[la.region].lngs.push(la.lng);
-            });
+            // Filter data
+            let data = localAuthorities;
+            if (regionFilter !== 'all') {
+                data = data.filter(la => la.region === regionFilter);
+            }
 
-            // Calculate averages and create region polygons (simplified as circles)
-            const values = Object.values(regionData).map(r => r.sum / r.count);
+            // Get value range for normalization
+            const values = data.map(la => la[indicator]);
             const minVal = Math.min(...values);
             const maxVal = Math.max(...values);
             const higherIsBetter = ['intoWorkRate', 'yoi'].includes(indicator);
 
-            Object.entries(regionData).forEach(([region, data]) => {
-                const avgValue = data.sum / data.count;
-                const normalized = (avgValue - minVal) / (maxVal - minVal);
-                const hue = higherIsBetter ? normalized * 120 : (1 - normalized) * 120;
-                const color = `hsl(${hue}, 70%, 45%)`;
+            const indicatorLabels = {
+                neetRate: 'NEET Rate',
+                youthDisability: 'Youth Disability Rate',
+                intoWorkRate: 'Into-Work Rate',
+                mentalHealth: 'Mental Health Prevalence',
+                yoi: 'Youth Opportunity Index',
+                change: 'NEET Change (1yr)'
+            };
 
-                // Calculate center of region
-                const centerLat = data.lats.reduce((a, b) => a + b, 0) / data.lats.length;
-                const centerLng = data.lngs.reduce((a, b) => a + b, 0) / data.lngs.length;
+            // Create filled circles for each LA - larger to create continuous coverage
+            data.forEach(la => {
+                const value = la[indicator];
+                const normalized = maxVal !== minVal ? (value - minVal) / (maxVal - minVal) : 0.5;
+                const color = getColorScale(normalized, higherIsBetter);
 
-                // Create a large circle to represent region
-                const circle = L.circle([centerLat, centerLng], {
-                    radius: 50000, // 50km radius
+                // Create large filled circle for each LA
+                const circle = L.circle([la.lat, la.lng], {
+                    radius: 25000, // 25km radius for good coverage
                     fillColor: color,
-                    color: '#fff',
-                    weight: 2,
-                    fillOpacity: 0.6
+                    color: 'rgba(255,255,255,0.8)',
+                    weight: 1,
+                    fillOpacity: 0.85
                 }).addTo(map);
 
+                // Rich popup with all details
                 circle.bindPopup(`
-                    <strong>${region}</strong><br>
-                    Average: ${avgValue.toFixed(1)}${indicator === 'yoi' ? '' : '%'}<br>
-                    LAs: ${data.count}
+                    <div class="info-panel" style="min-width:280px;">
+                        <h4 style="margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid ${color};">${la.name}</h4>
+                        <div class="stat-row"><span>Region</span><span>${la.region}</span></div>
+                        <div class="stat-row" style="background:#f8f9fa;font-weight:600;">
+                            <span>${indicatorLabels[indicator]}</span>
+                            <span style="color:${color};font-size:1.1em;">${value}${indicator === 'yoi' ? '' : '%'}</span>
+                        </div>
+                        <div class="stat-row"><span>NEET Rate</span><span>${la.neetRate}%</span></div>
+                        <div class="stat-row"><span>Into-Work Rate</span><span>${la.intoWorkRate}%</span></div>
+                        <div class="stat-row"><span>Youth Disability</span><span>${la.youthDisability}%</span></div>
+                        <div class="stat-row"><span>Mental Health</span><span>${la.mentalHealth}%</span></div>
+                        <div class="stat-row"><span>Labour Market Type</span><span>${labourMarketTypes[la.lmType].name}</span></div>
+                        <div class="stat-row"><span>1yr Change</span><span style="color:${la.change > 0 ? '#e74c3c' : '#27ae60'}">${la.change > 0 ? '+' : ''}${la.change}pp</span></div>
+                        <div class="stat-row"><span>UC Caseload</span><span>${la.caseload.toLocaleString()}</span></div>
+                    </div>
                 `);
 
-                // Add label
-                L.marker([centerLat, centerLng], {
-                    icon: L.divIcon({
-                        className: 'region-label',
-                        html: `<div style="background:white;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.2);">${region}<br>${avgValue.toFixed(1)}%</div>`,
-                        iconSize: [100, 40],
-                        iconAnchor: [50, 20]
-                    })
-                }).addTo(map);
-
                 markers.push(circle);
+
+                // Add LA name labels if enabled
+                if (showLabels) {
+                    const label = L.marker([la.lat, la.lng], {
+                        icon: L.divIcon({
+                            className: 'la-label',
+                            html: `<div style="background:rgba(255,255,255,0.95);padding:3px 6px;border-radius:3px;font-size:10px;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.3);white-space:nowrap;">${la.name}</div>`,
+                            iconSize: [80, 20],
+                            iconAnchor: [40, 10]
+                        })
+                    }).addTo(map);
+                    markers.push(label);
+                }
             });
 
-            updateMapLegend(indicator, minVal, maxVal, higherIsBetter);
+            // Update legend with gradient bar
+            updateChoroplethLegend(indicator, minVal, maxVal, higherIsBetter);
         }
 
         function renderHeatmapStyle() {
@@ -1463,20 +1576,19 @@
             // Create intensity-based circles (larger, more transparent, overlapping)
             data.forEach(la => {
                 const value = la[indicator];
-                const normalized = (value - minVal) / (maxVal - minVal);
-                const intensity = higherIsBetter ? normalized : (1 - normalized);
+                const normalized = maxVal !== minVal ? (value - minVal) / (maxVal - minVal) : 0.5;
+                const color = getColorScale(normalized, higherIsBetter);
 
                 // Multiple overlapping circles for heat effect
                 for (let i = 0; i < 3; i++) {
-                    const radius = 20000 + (intensity * 30000) - (i * 8000);
-                    const opacity = 0.15 + (intensity * 0.1);
-                    const hue = higherIsBetter ? normalized * 120 : (1 - normalized) * 120;
+                    const radius = 25000 + (normalized * 25000) - (i * 10000);
+                    const opacity = 0.2 + (normalized * 0.15) - (i * 0.05);
 
                     const circle = L.circle([la.lat, la.lng], {
-                        radius: radius,
-                        fillColor: `hsl(${hue}, 80%, 50%)`,
+                        radius: Math.max(5000, radius),
+                        fillColor: color,
                         color: 'transparent',
-                        fillOpacity: opacity
+                        fillOpacity: Math.max(0.1, opacity)
                     }).addTo(map);
 
                     if (i === 0) {
@@ -1486,7 +1598,7 @@
                 }
             });
 
-            updateMapLegend(indicator, minVal, maxVal, higherIsBetter);
+            updateChoroplethLegend(indicator, minVal, maxVal, higherIsBetter);
         }
 
         // ============================================================================
