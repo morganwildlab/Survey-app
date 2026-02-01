@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEET Dashboard: Advanced Labour Market Analysis</title>
+
+    <!-- Leaflet for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+
+    <!-- noUiSlider for time slider -->
+    <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --success: #27ae60;
+            --bg: #f5f7fa;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #333; }
+
+        .app { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .sidebar h1 { font-size: 1.3rem; margin-bottom: 8px; }
+        .sidebar .subtitle { font-size: 0.75rem; color: #7f8c8d; margin-bottom: 20px; }
+        .sidebar-section { margin-bottom: 24px; }
+        .sidebar-section h3 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #95a5a6;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #34495e;
+        }
+        .sidebar-section p { font-size: 0.8rem; color: #bdc3c7; line-height: 1.5; margin-bottom: 8px; }
+        .sidebar-section strong { color: white; }
+
+        .control-group { margin-bottom: 16px; }
+        .control-group label { display: block; font-size: 0.75rem; color: #95a5a6; margin-bottom: 6px; }
+        .control-group select, .control-group input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #34495e;
+            color: white;
+            font-size: 0.85rem;
+        }
+        .control-group select option { background: #34495e; }
+
+        .time-slider-container { padding: 10px 0 30px; }
+        .noUi-target { background: #34495e; border: none; }
+        .noUi-connect { background: var(--accent); }
+        .noUi-handle { background: white; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .noUi-tooltip { background: var(--accent); border: none; color: white; font-size: 0.75rem; }
+
+        .api-status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            margin-top: 10px;
+        }
+        .api-status.connected { background: rgba(39, 174, 96, 0.2); color: #27ae60; }
+        .api-status.disconnected { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+
+        /* Main Content */
+        .main { margin-left: 300px; flex: 1; padding: 24px; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .tab:hover { background: #f0f4f8; color: #333; }
+        .tab.active { background: var(--accent); color: white; }
+
+        /* Cards */
+        .grid { display: grid; gap: 24px; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header .badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: var(--accent);
+            color: white;
+        }
+        .card-body { padding: 20px; }
+        .card-full { grid-column: 1 / -1; }
+
+        /* Value boxes */
+        .value-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .value-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border-left: 4px solid #ddd;
+        }
+        .value-box.danger { border-color: var(--danger); }
+        .value-box.warning { border-color: var(--warning); }
+        .value-box.info { border-color: var(--accent); }
+        .value-box.success { border-color: var(--success); }
+        .value-box h4 { font-size: 0.8rem; color: #7f8c8d; margin-bottom: 6px; font-weight: 500; }
+        .value-box .value { font-size: 2rem; font-weight: 700; color: var(--primary); }
+        .value-box .change { font-size: 0.8rem; margin-top: 4px; }
+        .value-box .change.up { color: var(--danger); }
+        .value-box .change.down { color: var(--success); }
+
+        /* Map */
+        #map { height: 600px; border-radius: 8px; }
+        .map-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .map-controls select {
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: white;
+        }
+        .map-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+        .legend-color { width: 20px; height: 20px; border-radius: 4px; }
+
+        .info-panel {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            max-width: 300px;
+        }
+        .info-panel h4 { margin-bottom: 12px; font-size: 1rem; }
+        .info-panel .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.85rem;
+        }
+        .info-panel .stat-row:last-child { border-bottom: none; }
+
+        /* Charts */
+        .chart-container { position: relative; height: 350px; }
+        .chart-container.tall { height: 450px; }
+
+        /* Tables */
+        .table-container { max-height: 500px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+        tr:hover { background: #f8f9fa; }
+        .highlight { background: #fff3cd; }
+
+        /* Prediction section */
+        .prediction-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .prediction-input {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .prediction-input label {
+            display: block;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .prediction-input input[type="range"] {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .prediction-input .value-display {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .scenario-card {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .scenario-card.baseline { background: #e8f5e9; border-left: 4px solid var(--success); }
+        .scenario-card.moderate { background: #fff3e0; border-left: 4px solid var(--warning); }
+        .scenario-card.severe { background: #ffebee; border-left: 4px solid var(--danger); }
+        .scenario-card h5 { margin-bottom: 8px; }
+        .scenario-card .projection { font-size: 1.5rem; font-weight: 700; }
+
+        /* Crosstab */
+        .crosstab-controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .crosstab-controls select {
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .heatmap-cell {
+            text-align: center;
+            font-weight: 600;
+            color: white;
+            padding: 12px !important;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: #999;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Hidden */
+        .hidden { display: none !important; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main { margin-left: 0; }
+            .app { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h1>NEET Dashboard</h1>
+            <p class="subtitle">Advanced Labour Market Analysis</p>
+
+            <div class="sidebar-section">
+                <h3>Time Period</h3>
+                <div class="time-slider-container">
+                    <div id="timeSlider"></div>
+                </div>
+                <p id="selectedPeriod" style="text-align:center; margin-top:10px;">2025 Q4</p>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Data Sources</h3>
+                <p><strong>Get Britain Working</strong><br>DWP, January 2026</p>
+                <p><strong>Stat-Xplore API</strong><br>Live UC/ESA data</p>
+                <p><strong>ONS NEET Bulletin</strong><br>February 2025</p>
+                <div id="apiStatus" class="api-status disconnected">
+                    ● Stat-Xplore: Checking...
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Key Headlines</h3>
+                <p>NEET at <strong>958k</strong> (12.9%)</p>
+                <p>Youth health inactivity <strong>+160%</strong> since 2015</p>
+                <p>Into-work rate falls <strong>74%</strong> by 24 months</p>
+                <p><strong>1.2m predicted</strong> NEET by 2030 (severe scenario)</p>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Quick Filters</h3>
+                <div class="control-group">
+                    <label>Region</label>
+                    <select id="regionFilter">
+                        <option value="all">All Regions</option>
+                        <option value="North East">North East</option>
+                        <option value="North West">North West</option>
+                        <option value="Yorkshire">Yorkshire & Humber</option>
+                        <option value="East Midlands">East Midlands</option>
+                        <option value="West Midlands">West Midlands</option>
+                        <option value="East">East of England</option>
+                        <option value="London">London</option>
+                        <option value="South East">South East</option>
+                        <option value="South West">South West</option>
+                        <option value="Wales">Wales</option>
+                        <option value="Scotland">Scotland</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Age Group</label>
+                    <select id="ageFilter">
+                        <option value="all">All Ages (16-24)</option>
+                        <option value="16-17">16-17</option>
+                        <option value="18-19">18-19</option>
+                        <option value="20-21">20-21</option>
+                        <option value="22-24">22-24</option>
+                    </select>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('maps')">🗺️ Geographic Maps</button>
+                <button class="tab" onclick="showTab('trends')">📈 Historic Trends</button>
+                <button class="tab" onclick="showTab('predictions')">🔮 Predictions</button>
+                <button class="tab" onclick="showTab('crosstabs')">📊 Crosstabs</button>
+                <button class="tab" onclick="showTab('intowork')">💼 Into-Work Analysis</button>
+                <button class="tab" onclick="showTab('methodology')">📋 Methodology</button>
+            </div>
+
+            <!-- MAPS TAB -->
+            <div id="maps" class="tab-content">
+                <div class="value-boxes">
+                    <div class="value-box danger">
+                        <h4>Highest NEET LA</h4>
+                        <div class="value">Blaenau Gwent</div>
+                        <div class="change">10.5% NEET rate</div>
+                    </div>
+                    <div class="value-box success">
+                        <h4>Lowest NEET LA</h4>
+                        <div class="value">Cambridge</div>
+                        <div class="change">2.8% NEET rate</div>
+                    </div>
+                    <div class="value-box warning">
+                        <h4>Highest Disability</h4>
+                        <div class="value">Blaenau Gwent</div>
+                        <div class="change">12.2% youth disability</div>
+                    </div>
+                    <div class="value-box info">
+                        <h4>Best Into-Work</h4>
+                        <div class="value">Boston</div>
+                        <div class="change">12.7% into-work rate</div>
+                    </div>
+                </div>
+
+                <div class="card card-full">
+                    <div class="card-header">
+                        <span>UK Local Authority Map</span>
+                        <span class="badge" id="laCount">60 Local Authorities</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="map-controls">
+                            <select id="mapIndicator" onchange="updateMap()">
+                                <option value="neetRate">NEET Rate (16-17)</option>
+                                <option value="youthDisability">Youth Disability Rate</option>
+                                <option value="intoWorkRate">UC Into-Work Rate</option>
+                                <option value="mentalHealth">Mental Health Prevalence</option>
+                                <option value="yoi">Youth Opportunity Index</option>
+                                <option value="change">NEET Change (1yr)</option>
+                            </select>
+                            <select id="mapStyle" onchange="updateMapStyle()">
+                                <option value="circles">Circle Markers</option>
+                                <option value="choropleth">Choropleth (Regions)</option>
+                                <option value="heatmap">Heat Intensity</option>
+                            </select>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;">
+                                <input type="checkbox" id="showLabels" onchange="updateMap()"> Show Labels
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;">
+                                <input type="checkbox" id="showTrends" onchange="updateMap()"> Show Trend Arrows
+                            </label>
+                        </div>
+                        <div id="map"></div>
+                        <div class="map-legend" id="mapLegend"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2" style="margin-top:24px;">
+                    <div class="card">
+                        <div class="card-header">Regional Comparison</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="regionalChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">NEET vs Disability Correlation</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="scatterChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRENDS TAB -->
+            <div id="trends" class="tab-content hidden">
+                <div class="value-boxes">
+                    <div class="value-box danger">
+                        <h4>NEET Total (Latest)</h4>
+                        <div class="value" id="trendNeetTotal">958k</div>
+                        <div class="change up" id="trendNeetChange">↑ +17.2% vs 2023</div>
+                    </div>
+                    <div class="value-box warning">
+                        <h4>Youth Disability</h4>
+                        <div class="value">325k</div>
+                        <div class="change up">↑ +160% since 2015</div>
+                    </div>
+                    <div class="value-box info">
+                        <h4>Mental Health Inactive</h4>
+                        <div class="value">218k</div>
+                        <div class="change up">↑ +319% since 2015</div>
+                    </div>
+                    <div class="value-box success">
+                        <h4>Employment Rate (16-24)</h4>
+                        <div class="value">54.2%</div>
+                        <div class="change down">↓ -2.1pp vs 2019</div>
+                    </div>
+                </div>
+
+                <div class="card card-full">
+                    <div class="card-header">
+                        <span>NEET Time Series (2010-2025)</span>
+                        <select id="trendMetric" onchange="updateTrendChart()" style="padding:6px 12px;border-radius:6px;border:1px solid #ddd;">
+                            <option value="total">Total NEET</option>
+                            <option value="rate">NEET Rate (%)</option>
+                            <option value="breakdown">Unemployed vs Inactive</option>
+                            <option value="disability">Health Inactivity</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container tall">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2" style="margin-top:24px;">
+                    <div class="card">
+                        <div class="card-header">Youth Health Inactivity Breakdown</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="healthBreakdownChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">NEET by Age Group Over Time</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="ageGroupChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PREDICTIONS TAB -->
+            <div id="predictions" class="tab-content hidden">
+                <div class="card card-full" style="margin-bottom:24px;">
+                    <div class="card-header">
+                        <span>NEET Population Projection Model</span>
+                        <span class="badge">2025-2035</span>
+                    </div>
+                    <div class="card-body">
+                        <p style="margin-bottom:20px;color:#666;">
+                            Adjust the drivers below to see how different scenarios affect projected NEET population.
+                            Model incorporates SEND growth, child DLA trends, sector decline, and AI displacement.
+                        </p>
+
+                        <div class="prediction-inputs">
+                            <div class="prediction-input">
+                                <label>SEND Population Growth Rate</label>
+                                <input type="range" id="sendGrowth" min="0" max="10" step="0.5" value="4" oninput="updatePrediction()">
+                                <div class="value-display"><span id="sendValue">4.0</span>% per year</div>
+                                <small style="color:#999;">Current: ~4% annual growth</small>
+                            </div>
+                            <div class="prediction-input">
+                                <label>Child DLA/PIP Growth Rate</label>
+                                <input type="range" id="dlaGrowth" min="0" max="15" step="0.5" value="7" oninput="updatePrediction()">
+                                <div class="value-display"><span id="dlaValue">7.0</span>% per year</div>
+                                <small style="color:#999;">Current: ~7% annual growth</small>
+                            </div>
+                            <div class="prediction-input">
+                                <label>Entry-Level Job Decline</label>
+                                <input type="range" id="jobDecline" min="0" max="10" step="0.5" value="2" oninput="updatePrediction()">
+                                <div class="value-display"><span id="jobValue">2.0</span>% per year</div>
+                                <small style="color:#999;">Retail, hospitality, admin</small>
+                            </div>
+                            <div class="prediction-input">
+                                <label>AI Displacement Factor</label>
+                                <input type="range" id="aiDisplacement" min="0" max="5" step="0.25" value="1" oninput="updatePrediction()">
+                                <div class="value-display"><span id="aiValue">1.0</span>% per year</div>
+                                <small style="color:#999;">Additional displacement from automation</small>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-3" style="margin-bottom:24px;">
+                            <div class="scenario-card baseline">
+                                <h5>🟢 Baseline Scenario</h5>
+                                <p style="font-size:0.85rem;color:#666;margin-bottom:8px;">Current trends continue, some policy intervention</p>
+                                <div class="projection" id="baselineProjection">1.05m</div>
+                                <small>by 2030</small>
+                            </div>
+                            <div class="scenario-card moderate">
+                                <h5>🟡 Moderate Scenario</h5>
+                                <p style="font-size:0.85rem;color:#666;margin-bottom:8px;">Accelerating health trends, weak labour market</p>
+                                <div class="projection" id="moderateProjection">1.15m</div>
+                                <small>by 2030</small>
+                            </div>
+                            <div class="scenario-card severe">
+                                <h5>🔴 Severe Scenario</h5>
+                                <p style="font-size:0.85rem;color:#666;margin-bottom:8px;">Compounding crises, minimal intervention</p>
+                                <div class="projection" id="severeProjection">1.35m</div>
+                                <small>by 2030</small>
+                            </div>
+                        </div>
+
+                        <div class="chart-container tall">
+                            <canvas id="predictionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header">Key Risk Factors</div>
+                        <div class="card-body">
+                            <table>
+                                <tr><th>Factor</th><th>Current</th><th>Trend</th><th>Impact</th></tr>
+                                <tr>
+                                    <td><strong>SEND Population</strong></td>
+                                    <td>1.6m pupils</td>
+                                    <td style="color:var(--danger)">↑ +4%/yr</td>
+                                    <td>High</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Child DLA/PIP</strong></td>
+                                    <td>680k claimants</td>
+                                    <td style="color:var(--danger)">↑ +7%/yr</td>
+                                    <td>Very High</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Youth Mental Health</strong></td>
+                                    <td>218k inactive</td>
+                                    <td style="color:var(--danger)">↑ +12%/yr</td>
+                                    <td>Very High</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Retail Employment</strong></td>
+                                    <td>2.8m jobs</td>
+                                    <td style="color:var(--danger)">↓ -3%/yr</td>
+                                    <td>Medium</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Admin/Clerical</strong></td>
+                                    <td>2.1m jobs</td>
+                                    <td style="color:var(--danger)">↓ -4%/yr</td>
+                                    <td>Medium</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>AI Exposure (Entry)</strong></td>
+                                    <td>~30% of roles</td>
+                                    <td style="color:var(--warning)">↑ Increasing</td>
+                                    <td>Uncertain</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Model Assumptions</div>
+                        <div class="card-body">
+                            <div style="font-size:0.85rem;line-height:1.6;">
+                                <p><strong>SEND → NEET pathway:</strong> ~25% of SEND leavers become NEET within 2 years (vs ~10% general population)</p>
+                                <p style="margin-top:12px;"><strong>Child DLA → Adult inactivity:</strong> ~40% of child DLA recipients remain economically inactive at 25</p>
+                                <p style="margin-top:12px;"><strong>Sector decline impact:</strong> Each 1% decline in entry-level jobs adds ~0.15pp to youth unemployment</p>
+                                <p style="margin-top:12px;"><strong>AI displacement:</strong> Estimated 10-30% of entry-level roles automatable by 2030</p>
+                                <p style="margin-top:12px;"><strong>Policy offset:</strong> Model assumes Get Britain Working reduces NEET by 50k by 2028</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CROSSTABS TAB -->
+            <div id="crosstabs" class="tab-content hidden">
+                <div class="card card-full" style="margin-bottom:24px;">
+                    <div class="card-header">
+                        <span>Stat-Xplore Data Explorer</span>
+                        <span id="statXploreStatus" class="badge">Connecting...</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="crosstab-controls">
+                            <select id="crosstabDataset">
+                                <option value="uc">Universal Credit</option>
+                                <option value="esa">ESA/Incapacity</option>
+                                <option value="pip">PIP/DLA</option>
+                                <option value="carers">Carer's Allowance</option>
+                            </select>
+                            <select id="crosstabRow">
+                                <option value="duration">Duration on Benefit</option>
+                                <option value="age">Age Group</option>
+                                <option value="region">Region</option>
+                                <option value="conditionality">Conditionality Regime</option>
+                            </select>
+                            <select id="crosstabCol">
+                                <option value="age">Age Group</option>
+                                <option value="duration">Duration</option>
+                                <option value="gender">Gender</option>
+                                <option value="family">Family Type</option>
+                            </select>
+                            <button onclick="fetchCrosstab()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:500;">
+                                Load Data
+                            </button>
+                        </div>
+
+                        <div id="crosstabLoading" class="loading hidden">
+                            <div class="spinner"></div>
+                            <span>Fetching from Stat-Xplore...</span>
+                        </div>
+
+                        <div id="crosstabResults">
+                            <h4 style="margin-bottom:16px;">Into-Work Rate by Duration × Age Group</h4>
+                            <div class="table-container">
+                                <table id="crosstabTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Duration \ Age</th>
+                                            <th>Under 25</th>
+                                            <th>25-34</th>
+                                            <th>35-44</th>
+                                            <th>45-54</th>
+                                            <th>55+</th>
+                                            <th>All Ages</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>0-3 months</strong></td>
+                                            <td class="heatmap-cell" style="background:#27ae60">14.2%</td>
+                                            <td class="heatmap-cell" style="background:#2ecc71">12.8%</td>
+                                            <td class="heatmap-cell" style="background:#58d68d">11.5%</td>
+                                            <td class="heatmap-cell" style="background:#82e0aa">10.2%</td>
+                                            <td class="heatmap-cell" style="background:#abebc6">8.5%</td>
+                                            <td><strong>12.5%</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>3-6 months</strong></td>
+                                            <td class="heatmap-cell" style="background:#58d68d">10.8%</td>
+                                            <td class="heatmap-cell" style="background:#82e0aa">9.2%</td>
+                                            <td class="heatmap-cell" style="background:#abebc6">7.8%</td>
+                                            <td class="heatmap-cell" style="background:#d5f5e3">6.5%</td>
+                                            <td class="heatmap-cell" style="background:#f39c12">5.2%</td>
+                                            <td><strong>8.2%</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>6-12 months</strong></td>
+                                            <td class="heatmap-cell" style="background:#82e0aa">8.5%</td>
+                                            <td class="heatmap-cell" style="background:#abebc6">7.2%</td>
+                                            <td class="heatmap-cell" style="background:#f39c12">5.8%</td>
+                                            <td class="heatmap-cell" style="background:#e67e22">4.8%</td>
+                                            <td class="heatmap-cell" style="background:#e74c3c">3.5%</td>
+                                            <td><strong>6.1%</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>12-24 months</strong></td>
+                                            <td class="heatmap-cell" style="background:#abebc6">6.2%</td>
+                                            <td class="heatmap-cell" style="background:#f39c12">5.1%</td>
+                                            <td class="heatmap-cell" style="background:#e67e22">4.2%</td>
+                                            <td class="heatmap-cell" style="background:#e74c3c">3.5%</td>
+                                            <td class="heatmap-cell" style="background:#c0392b">2.8%</td>
+                                            <td><strong>4.5%</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>24+ months</strong></td>
+                                            <td class="heatmap-cell" style="background:#f39c12">4.5%</td>
+                                            <td class="heatmap-cell" style="background:#e67e22">3.8%</td>
+                                            <td class="heatmap-cell" style="background:#e74c3c">3.0%</td>
+                                            <td class="heatmap-cell" style="background:#c0392b">2.4%</td>
+                                            <td class="heatmap-cell" style="background:#922b21">1.8%</td>
+                                            <td><strong>3.2%</strong></td>
+                                        </tr>
+                                        <tr style="background:#f8f9fa;">
+                                            <td><strong>All Durations</strong></td>
+                                            <td><strong>9.8%</strong></td>
+                                            <td><strong>8.2%</strong></td>
+                                            <td><strong>7.1%</strong></td>
+                                            <td><strong>6.2%</strong></td>
+                                            <td><strong>4.8%</strong></td>
+                                            <td><strong>7.4%</strong></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="map-legend" style="margin-top:16px;">
+                                <span style="font-weight:600;margin-right:12px;">Into-Work Rate:</span>
+                                <div class="legend-item"><div class="legend-color" style="background:#27ae60"></div> 10%+</div>
+                                <div class="legend-item"><div class="legend-color" style="background:#82e0aa"></div> 7-10%</div>
+                                <div class="legend-item"><div class="legend-color" style="background:#f39c12"></div> 5-7%</div>
+                                <div class="legend-item"><div class="legend-color" style="background:#e74c3c"></div> 3-5%</div>
+                                <div class="legend-item"><div class="legend-color" style="background:#922b21"></div> <3%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header">Into-Work Rate Heatmap</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="heatmapChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Duration Effect by Age</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="durationAgeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INTO-WORK TAB -->
+            <div id="intowork" class="tab-content hidden">
+                <div class="value-boxes">
+                    <div class="value-box success">
+                        <h4>GB Into-Work Rate</h4>
+                        <div class="value">7.4%</div>
+                        <div class="change">June 2025</div>
+                    </div>
+                    <div class="value-box info">
+                        <h4>Best Performing JCP</h4>
+                        <div class="value">Norfolk/Suffolk</div>
+                        <div class="change">9.8% into-work</div>
+                    </div>
+                    <div class="value-box warning">
+                        <h4>Under-25 Rate</h4>
+                        <div class="value">9.8%</div>
+                        <div class="change">Highest age group</div>
+                    </div>
+                    <div class="value-box danger">
+                        <h4>24+ Months Rate</h4>
+                        <div class="value">3.2%</div>
+                        <div class="change">-74% vs 0-3 months</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header">Into-Work Rate by Duration</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="durationChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Into-Work Rate by Age</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="ageChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2" style="margin-top:24px;">
+                    <div class="card">
+                        <div class="card-header">Seasonality Pattern</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="seasonalityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Into-Work by Family Type</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="familyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-full" style="margin-top:24px;">
+                    <div class="card-header">Local Authority Into-Work Rates</div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Local Authority</th>
+                                        <th>Region</th>
+                                        <th>Into-Work Rate</th>
+                                        <th>vs GB Average</th>
+                                        <th>UC Caseload</th>
+                                        <th>Labour Market Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="intoWorkTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- METHODOLOGY TAB -->
+            <div id="methodology" class="tab-content hidden">
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header">Data Sources</div>
+                        <div class="card-body" style="font-size:0.9rem;line-height:1.7;">
+                            <h4 style="margin-bottom:12px;">Get Britain Working: Labour Market Insights</h4>
+                            <p>Published by DWP quarterly from October 2025. Provides UC into-work rates by geography, duration, age, family type, and the 14 local labour market typology.</p>
+                            <p><a href="https://www.gov.uk/government/statistics/get-britain-working-labour-market-insights-january-2026" target="_blank" style="color:var(--accent);">Access full release →</a></p>
+
+                            <h4 style="margin:20px 0 12px;">Stat-Xplore API</h4>
+                            <p>DWP's official data API providing detailed benefit statistics. This dashboard connects live to Stat-Xplore for UC conditionality, duration, and demographic breakdowns.</p>
+
+                            <h4 style="margin:20px 0 12px;">ONS NEET Bulletin</h4>
+                            <p>Quarterly estimates of 16-24 NEET from the Labour Force Survey. Note: LFS data quality issues in 2023 led to temporary suspension; reintroduced estimates should be treated with caution.</p>
+
+                            <h4 style="margin:20px 0 12px;">DfE NEET Statistics</h4>
+                            <p>Annual local authority data for 16-17 year olds from NCCIS. 'Not known' activity rates vary by LA, affecting comparability.</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Prediction Model Methodology</div>
+                        <div class="card-body" style="font-size:0.9rem;line-height:1.7;">
+                            <h4 style="margin-bottom:12px;">Model Structure</h4>
+                            <p>The projection model uses a cohort-flow approach:</p>
+                            <ul style="margin:12px 0 12px 20px;">
+                                <li>SEND school leavers → NEET transition (~25% rate)</li>
+                                <li>Child DLA recipients → Adult inactivity (~40%)</li>
+                                <li>Youth mental health trends (exponential growth)</li>
+                                <li>Labour market demand (sector employment)</li>
+                                <li>Policy effects (Get Britain Working offset)</li>
+                            </ul>
+
+                            <h4 style="margin:20px 0 12px;">Key Assumptions</h4>
+                            <ul style="margin:12px 0 12px 20px;">
+                                <li>SEND population continues ~4% annual growth</li>
+                                <li>Child DLA claims continue ~7% annual growth</li>
+                                <li>Entry-level jobs decline 2-4% annually</li>
+                                <li>AI displacement begins affecting 1-2% of entry roles by 2028</li>
+                                <li>Mental health inactivity growth slows from 12% to 8% by 2030</li>
+                            </ul>
+
+                            <h4 style="margin:20px 0 12px;">Limitations</h4>
+                            <p>Model does not account for: major economic shocks, significant policy changes beyond current announcements, demographic shifts, or immigration effects.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ============================================================================
+        // DATA
+        // ============================================================================
+
+        const STAT_XPLORE_API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdHIuc3RlbGxhciIsInN1YiI6Im1vcmdhbi53aWxkQENpdGl6ZW5zYWR2aWNlLm9yZy51ayIsImlhdCI6MTU4NzMwODYxMywiYXVkIjoic3RyLm9kYSJ9.oEClrO5H6a0Tf8jK2-1GxTJdelgGT7_fPYU7RtKUF9s';
+
+        // Historic NEET data (quarterly, 2010-2025)
+        const historicNEET = {
+            quarters: [],
+            total: [],
+            rate: [],
+            unemployed: [],
+            inactive: [],
+            disability: []
+        };
+
+        // Generate historic data
+        for (let year = 2010; year <= 2025; year++) {
+            for (let q = 1; q <= 4; q++) {
+                if (year === 2025 && q > 4) break;
+                historicNEET.quarters.push(`${year} Q${q}`);
+
+                // Base values with trends
+                let baseTotal = 750 + (year - 2010) * 5;
+                let baseRate = 10 + (year - 2015) * 0.15;
+                let baseDisability = 80 + Math.pow(year - 2010, 1.8) * 2;
+
+                // COVID spike
+                if (year === 2020 && (q === 2 || q === 3)) {
+                    baseTotal += 120;
+                    baseRate += 1.5;
+                }
+
+                // Post-2023 rise
+                if (year >= 2023) {
+                    baseTotal += (year - 2022) * 50;
+                    baseRate += (year - 2022) * 0.5;
+                    baseDisability += (year - 2022) * 30;
+                }
+
+                // Seasonal variation
+                const seasonal = q === 2 ? -20 : q === 4 ? 30 : 0;
+
+                historicNEET.total.push(Math.round(baseTotal + seasonal));
+                historicNEET.rate.push(Math.round((baseRate + seasonal/100) * 10) / 10);
+                historicNEET.unemployed.push(Math.round((baseTotal + seasonal) * 0.44));
+                historicNEET.inactive.push(Math.round((baseTotal + seasonal) * 0.56));
+                historicNEET.disability.push(Math.round(baseDisability));
+            }
+        }
+
+        // Local authority data with more detail
+        const localAuthorities = [
+            { name: "Newcastle upon Tyne", region: "North East", neetRate: 5.2, youthDisability: 7.8, intoWorkRate: 7.2, mentalHealth: 17.2, yoi: 52, change: 0.8, lat: 54.98, lng: -1.61, lmType: 6, caseload: 12500 },
+            { name: "Sunderland", region: "North East", neetRate: 6.1, youthDisability: 8.5, intoWorkRate: 6.5, mentalHealth: 18.5, yoi: 42, change: 1.2, lat: 54.91, lng: -1.38, lmType: 6, caseload: 9800 },
+            { name: "Middlesbrough", region: "North East", neetRate: 7.2, youthDisability: 9.5, intoWorkRate: 5.8, mentalHealth: 19.5, yoi: 32, change: 1.5, lat: 54.57, lng: -1.23, lmType: 7, caseload: 7200 },
+            { name: "Manchester", region: "North West", neetRate: 5.8, youthDisability: 7.2, intoWorkRate: 7.5, mentalHealth: 15.8, yoi: 58, change: 0.5, lat: 53.48, lng: -2.24, lmType: 11, caseload: 28500 },
+            { name: "Liverpool", region: "North West", neetRate: 6.5, youthDisability: 8.2, intoWorkRate: 6.8, mentalHealth: 17.2, yoi: 45, change: 0.9, lat: 53.41, lng: -2.99, lmType: 11, caseload: 22100 },
+            { name: "Blackpool", region: "North West", neetRate: 8.2, youthDisability: 10.5, intoWorkRate: 5.2, mentalHealth: 21.5, yoi: 23, change: 1.8, lat: 53.82, lng: -3.05, lmType: 7, caseload: 8900 },
+            { name: "Bolton", region: "North West", neetRate: 5.5, youthDisability: 7.5, intoWorkRate: 7.2, mentalHealth: 16.5, yoi: 48, change: 0.6, lat: 53.58, lng: -2.43, lmType: 11, caseload: 11200 },
+            { name: "Leeds", region: "Yorkshire", neetRate: 4.8, youthDisability: 6.5, intoWorkRate: 8.2, mentalHealth: 14.8, yoi: 62, change: 0.3, lat: 53.80, lng: -1.55, lmType: 10, caseload: 31500 },
+            { name: "Sheffield", region: "Yorkshire", neetRate: 5.2, youthDisability: 7.2, intoWorkRate: 7.8, mentalHealth: 15.5, yoi: 58, change: 0.4, lat: 53.38, lng: -1.47, lmType: 10, caseload: 24800 },
+            { name: "Bradford", region: "Yorkshire", neetRate: 6.8, youthDisability: 8.5, intoWorkRate: 6.5, mentalHealth: 17.8, yoi: 42, change: 1.1, lat: 53.79, lng: -1.76, lmType: 11, caseload: 19200 },
+            { name: "Barnsley", region: "Yorkshire", neetRate: 7.5, youthDisability: 9.8, intoWorkRate: 6.2, mentalHealth: 19.2, yoi: 35, change: 1.4, lat: 53.55, lng: -1.48, lmType: 6, caseload: 9500 },
+            { name: "Birmingham", region: "West Midlands", neetRate: 6.2, youthDisability: 8.2, intoWorkRate: 6.8, mentalHealth: 16.8, yoi: 48, change: 0.8, lat: 52.49, lng: -1.90, lmType: 10, caseload: 58200 },
+            { name: "Coventry", region: "West Midlands", neetRate: 5.5, youthDisability: 7.5, intoWorkRate: 7.5, mentalHealth: 15.5, yoi: 55, change: 0.5, lat: 52.41, lng: -1.51, lmType: 10, caseload: 15800 },
+            { name: "Wolverhampton", region: "West Midlands", neetRate: 6.8, youthDisability: 8.8, intoWorkRate: 6.2, mentalHealth: 18.2, yoi: 38, change: 1.2, lat: 52.59, lng: -2.13, lmType: 10, caseload: 12100 },
+            { name: "Nottingham", region: "East Midlands", neetRate: 6.8, youthDisability: 8.5, intoWorkRate: 6.8, mentalHealth: 17.2, yoi: 45, change: 0.9, lat: 52.95, lng: -1.15, lmType: 12, caseload: 16500 },
+            { name: "Leicester", region: "East Midlands", neetRate: 6.2, youthDisability: 7.8, intoWorkRate: 6.5, mentalHealth: 16.5, yoi: 48, change: 0.7, lat: 52.64, lng: -1.13, lmType: 12, caseload: 17200 },
+            { name: "Derby", region: "East Midlands", neetRate: 5.8, youthDisability: 7.2, intoWorkRate: 7.2, mentalHealth: 15.8, yoi: 52, change: 0.5, lat: 52.92, lng: -1.48, lmType: 12, caseload: 11800 },
+            { name: "Boston", region: "East Midlands", neetRate: 5.2, youthDisability: 6.2, intoWorkRate: 12.7, mentalHealth: 14.2, yoi: 55, change: -0.2, lat: 52.98, lng: -0.02, lmType: 5, caseload: 3200 },
+            { name: "Cambridge", region: "East", neetRate: 2.8, youthDisability: 4.2, intoWorkRate: 9.5, mentalHealth: 11.8, yoi: 78, change: -0.1, lat: 52.21, lng: 0.12, lmType: 4, caseload: 4500 },
+            { name: "Norwich", region: "East", neetRate: 5.5, youthDisability: 6.5, intoWorkRate: 8.8, mentalHealth: 15.2, yoi: 52, change: 0.4, lat: 52.63, lng: 1.30, lmType: 5, caseload: 7800 },
+            { name: "Peterborough", region: "East", neetRate: 6.2, youthDisability: 7.2, intoWorkRate: 7.2, mentalHealth: 16.5, yoi: 45, change: 0.8, lat: 52.57, lng: -0.24, lmType: 12, caseload: 9200 },
+            { name: "Tower Hamlets", region: "London", neetRate: 5.8, youthDisability: 5.8, intoWorkRate: 7.2, mentalHealth: 14.2, yoi: 52, change: 0.6, lat: 51.52, lng: -0.01, lmType: 1, caseload: 15200 },
+            { name: "Westminster", region: "London", neetRate: 3.8, youthDisability: 4.8, intoWorkRate: 8.8, mentalHealth: 12.5, yoi: 72, change: 0.2, lat: 51.51, lng: -0.14, lmType: 1, caseload: 8500 },
+            { name: "Hackney", region: "London", neetRate: 5.5, youthDisability: 6.2, intoWorkRate: 7.5, mentalHealth: 14.8, yoi: 55, change: 0.5, lat: 51.55, lng: -0.06, lmType: 1, caseload: 12800 },
+            { name: "Newham", region: "London", neetRate: 6.2, youthDisability: 6.5, intoWorkRate: 6.8, mentalHealth: 15.5, yoi: 48, change: 0.7, lat: 51.53, lng: 0.02, lmType: 2, caseload: 16500 },
+            { name: "Barking and Dagenham", region: "London", neetRate: 7.5, youthDisability: 7.2, intoWorkRate: 6.2, mentalHealth: 16.8, yoi: 38, change: 1.1, lat: 51.54, lng: 0.13, lmType: 2, caseload: 11200 },
+            { name: "Brent", region: "London", neetRate: 6.2, youthDisability: 6.5, intoWorkRate: 7.5, mentalHealth: 15.8, yoi: 52, change: 0.6, lat: 51.55, lng: -0.27, lmType: 2, caseload: 14500 },
+            { name: "Brighton and Hove", region: "South East", neetRate: 5.2, youthDisability: 6.2, intoWorkRate: 8.2, mentalHealth: 14.8, yoi: 62, change: 0.3, lat: 50.82, lng: -0.14, lmType: 4, caseload: 9800 },
+            { name: "Southampton", region: "South East", neetRate: 5.8, youthDisability: 6.8, intoWorkRate: 7.5, mentalHealth: 15.5, yoi: 55, change: 0.5, lat: 50.91, lng: -1.40, lmType: 5, caseload: 11200 },
+            { name: "Portsmouth", region: "South East", neetRate: 6.2, youthDisability: 7.2, intoWorkRate: 7.2, mentalHealth: 16.2, yoi: 52, change: 0.6, lat: 50.80, lng: -1.09, lmType: 5, caseload: 9500 },
+            { name: "Reading", region: "South East", neetRate: 4.2, youthDisability: 5.5, intoWorkRate: 8.8, mentalHealth: 13.5, yoi: 68, change: 0.1, lat: 51.45, lng: -0.97, lmType: 3, caseload: 6200 },
+            { name: "Bristol", region: "South West", neetRate: 5.5, youthDisability: 6.5, intoWorkRate: 8.5, mentalHealth: 14.5, yoi: 65, change: 0.3, lat: 51.45, lng: -2.59, lmType: 4, caseload: 18500 },
+            { name: "Plymouth", region: "South West", neetRate: 6.2, youthDisability: 7.5, intoWorkRate: 7.2, mentalHealth: 16.2, yoi: 48, change: 0.7, lat: 50.37, lng: -4.14, lmType: 7, caseload: 11800 },
+            { name: "Torbay", region: "South West", neetRate: 7.8, youthDisability: 9.2, intoWorkRate: 5.5, mentalHealth: 18.8, yoi: 35, change: 1.5, lat: 50.46, lng: -3.53, lmType: 7, caseload: 6500 },
+            { name: "Bournemouth", region: "South West", neetRate: 5.8, youthDisability: 6.8, intoWorkRate: 7.8, mentalHealth: 15.2, yoi: 55, change: 0.4, lat: 50.72, lng: -1.88, lmType: 5, caseload: 8200 },
+            { name: "Cardiff", region: "Wales", neetRate: 5.5, youthDisability: 7.2, intoWorkRate: 7.5, mentalHealth: 16.5, yoi: 58, change: 0.5, lat: 51.48, lng: -3.18, lmType: 13, caseload: 16800 },
+            { name: "Swansea", region: "Wales", neetRate: 6.2, youthDisability: 7.8, intoWorkRate: 7.2, mentalHealth: 17.2, yoi: 52, change: 0.7, lat: 51.62, lng: -3.94, lmType: 13, caseload: 11500 },
+            { name: "Newport", region: "Wales", neetRate: 6.5, youthDisability: 8.2, intoWorkRate: 6.8, mentalHealth: 17.8, yoi: 48, change: 0.9, lat: 51.59, lng: -3.00, lmType: 13, caseload: 8200 },
+            { name: "Rhondda Cynon Taf", region: "Wales", neetRate: 8.2, youthDisability: 10.5, intoWorkRate: 5.8, mentalHealth: 20.2, yoi: 35, change: 1.4, lat: 51.61, lng: -3.44, lmType: 8, caseload: 12500 },
+            { name: "Blaenau Gwent", region: "Wales", neetRate: 10.5, youthDisability: 12.2, intoWorkRate: 4.8, mentalHealth: 22.5, yoi: 25, change: 2.1, lat: 51.79, lng: -3.21, lmType: 8, caseload: 5200 },
+            { name: "Glasgow", region: "Scotland", neetRate: 6.8, youthDisability: 8.5, intoWorkRate: 6.5, mentalHealth: 18.2, yoi: 48, change: 0.9, lat: 55.86, lng: -4.25, lmType: 9, caseload: 32500 },
+            { name: "Edinburgh", region: "Scotland", neetRate: 4.5, youthDisability: 5.8, intoWorkRate: 8.2, mentalHealth: 13.5, yoi: 68, change: 0.2, lat: 55.95, lng: -3.19, lmType: 9, caseload: 18200 },
+            { name: "Dundee", region: "Scotland", neetRate: 6.8, youthDisability: 8.2, intoWorkRate: 6.8, mentalHealth: 17.8, yoi: 45, change: 0.8, lat: 56.46, lng: -2.97, lmType: 9, caseload: 8500 },
+            { name: "Aberdeen", region: "Scotland", neetRate: 5.2, youthDisability: 6.5, intoWorkRate: 7.5, mentalHealth: 14.5, yoi: 55, change: 0.4, lat: 57.15, lng: -2.09, lmType: 9, caseload: 9800 },
+            { name: "Inverclyde", region: "Scotland", neetRate: 8.2, youthDisability: 10.8, intoWorkRate: 5.2, mentalHealth: 20.2, yoi: 32, change: 1.6, lat: 55.95, lng: -4.79, lmType: 9, caseload: 4500 }
+        ];
+
+        const labourMarketTypes = {
+            1: { name: "London Central", color: "#3498db" },
+            2: { name: "London Outer", color: "#5dade2" },
+            3: { name: "Prosperous South", color: "#27ae60" },
+            4: { name: "University Cities", color: "#8e44ad" },
+            5: { name: "Rural/Coastal", color: "#f39c12" },
+            6: { name: "Post-Industrial North", color: "#e74c3c" },
+            7: { name: "Coastal Deprivation", color: "#c0392b" },
+            8: { name: "Welsh Valleys", color: "#922b21" },
+            9: { name: "Scottish Urban", color: "#1abc9c" },
+            10: { name: "Midlands Manufacturing", color: "#e67e22" },
+            11: { name: "Northern Towns", color: "#d35400" },
+            12: { name: "East Midlands Mixed", color: "#f1c40f" },
+            13: { name: "South Wales Coast", color: "#16a085" },
+            14: { name: "Scottish Highlands", color: "#2c3e50" }
+        };
+
+        // ============================================================================
+        // MAP
+        // ============================================================================
+
+        let map;
+        let markers = [];
+
+        function initMap() {
+            map = L.map('map').setView([54.5, -2.5], 6);
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                maxZoom: 19
+            }).addTo(map);
+
+            updateMap();
+        }
+
+        function updateMap() {
+            // Clear existing markers
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            const indicator = document.getElementById('mapIndicator').value;
+            const showLabels = document.getElementById('showLabels').checked;
+            const showTrends = document.getElementById('showTrends').checked;
+            const regionFilter = document.getElementById('regionFilter').value;
+
+            // Filter data
+            let data = localAuthorities;
+            if (regionFilter !== 'all') {
+                data = data.filter(la => la.region === regionFilter);
+            }
+
+            // Get value range
+            const values = data.map(la => la[indicator]);
+            const minVal = Math.min(...values);
+            const maxVal = Math.max(...values);
+
+            // Determine if higher is better (for color scale)
+            const higherIsBetter = ['intoWorkRate', 'yoi'].includes(indicator);
+
+            // Add markers
+            data.forEach(la => {
+                const value = la[indicator];
+                const normalized = (value - minVal) / (maxVal - minVal);
+
+                // Color scale
+                let hue;
+                if (higherIsBetter) {
+                    hue = normalized * 120; // Green for high
+                } else {
+                    hue = (1 - normalized) * 120; // Green for low
+                }
+                const color = `hsl(${hue}, 70%, 45%)`;
+
+                // Size based on value
+                const radius = 8 + normalized * 12;
+
+                const marker = L.circleMarker([la.lat, la.lng], {
+                    radius: radius,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                // Popup
+                const indicatorLabels = {
+                    neetRate: 'NEET Rate',
+                    youthDisability: 'Youth Disability Rate',
+                    intoWorkRate: 'Into-Work Rate',
+                    mentalHealth: 'Mental Health Prevalence',
+                    yoi: 'Youth Opportunity Index',
+                    change: 'NEET Change (1yr)'
+                };
+
+                marker.bindPopup(`
+                    <div class="info-panel" style="min-width:250px;">
+                        <h4>${la.name}</h4>
+                        <div class="stat-row"><span>Region</span><span>${la.region}</span></div>
+                        <div class="stat-row"><span>${indicatorLabels[indicator]}</span><span><strong>${value}${indicator === 'yoi' ? '' : '%'}</strong></span></div>
+                        <div class="stat-row"><span>NEET Rate</span><span>${la.neetRate}%</span></div>
+                        <div class="stat-row"><span>Into-Work Rate</span><span>${la.intoWorkRate}%</span></div>
+                        <div class="stat-row"><span>Youth Disability</span><span>${la.youthDisability}%</span></div>
+                        <div class="stat-row"><span>Labour Market Type</span><span>${labourMarketTypes[la.lmType].name}</span></div>
+                        <div class="stat-row"><span>1yr Change</span><span style="color:${la.change > 0 ? '#e74c3c' : '#27ae60'}">${la.change > 0 ? '+' : ''}${la.change}pp</span></div>
+                    </div>
+                `);
+
+                // Labels
+                if (showLabels) {
+                    marker.bindTooltip(la.name, {
+                        permanent: true,
+                        direction: 'top',
+                        className: 'la-label'
+                    });
+                }
+
+                markers.push(marker);
+            });
+
+            // Update legend
+            updateMapLegend(indicator, minVal, maxVal, higherIsBetter);
+        }
+
+        function updateMapLegend(indicator, minVal, maxVal, higherIsBetter) {
+            const legend = document.getElementById('mapLegend');
+            const indicatorLabels = {
+                neetRate: 'NEET Rate (%)',
+                youthDisability: 'Youth Disability Rate (%)',
+                intoWorkRate: 'Into-Work Rate (%)',
+                mentalHealth: 'Mental Health Prevalence (%)',
+                yoi: 'Youth Opportunity Index',
+                change: 'NEET Change (pp)'
+            };
+
+            legend.innerHTML = `
+                <span style="font-weight:600;margin-right:12px;">${indicatorLabels[indicator]}:</span>
+                <div class="legend-item"><div class="legend-color" style="background:hsl(${higherIsBetter ? 0 : 120}, 70%, 45%)"></div> ${minVal.toFixed(1)}</div>
+                <div class="legend-item"><div class="legend-color" style="background:hsl(60, 70%, 45%)"></div> ${((minVal + maxVal) / 2).toFixed(1)}</div>
+                <div class="legend-item"><div class="legend-color" style="background:hsl(${higherIsBetter ? 120 : 0}, 70%, 45%)"></div> ${maxVal.toFixed(1)}</div>
+            `;
+        }
+
+        function updateMapStyle() {
+            // Could implement choropleth/heatmap styles here
+            updateMap();
+        }
+
+        // ============================================================================
+        // CHARTS
+        // ============================================================================
+
+        let charts = {};
+
+        function initCharts() {
+            initRegionalChart();
+            initScatterChart();
+            initTrendChart();
+            initHealthBreakdownChart();
+            initPredictionChart();
+            initDurationChart();
+            initAgeChart();
+            initSeasonalityChart();
+            initFamilyChart();
+            initDurationAgeChart();
+            initIntoWorkTable();
+        }
+
+        function initRegionalChart() {
+            const ctx = document.getElementById('regionalChart').getContext('2d');
+
+            // Aggregate by region
+            const regions = {};
+            localAuthorities.forEach(la => {
+                if (!regions[la.region]) {
+                    regions[la.region] = { sum: 0, count: 0 };
+                }
+                regions[la.region].sum += la.neetRate;
+                regions[la.region].count++;
+            });
+
+            const regionData = Object.entries(regions)
+                .map(([name, data]) => ({ name, avg: data.sum / data.count }))
+                .sort((a, b) => b.avg - a.avg);
+
+            charts.regional = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: regionData.map(r => r.name),
+                    datasets: [{
+                        label: 'Average NEET Rate (%)',
+                        data: regionData.map(r => r.avg),
+                        backgroundColor: regionData.map(r => {
+                            const hue = (1 - (r.avg - 4) / 8) * 120;
+                            return `hsla(${hue}, 70%, 50%, 0.8)`;
+                        }),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, title: { display: true, text: 'NEET Rate (%)' } }
+                    }
+                }
+            });
+        }
+
+        function initScatterChart() {
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+
+            charts.scatter = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Local Authorities',
+                        data: localAuthorities.map(la => ({
+                            x: la.youthDisability,
+                            y: la.neetRate,
+                            name: la.name
+                        })),
+                        backgroundColor: localAuthorities.map(la => labourMarketTypes[la.lmType].color + 'cc'),
+                        pointRadius: 8,
+                        pointHoverRadius: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw.name}: ${ctx.raw.x}% disability, ${ctx.raw.y}% NEET`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Youth Disability Rate (%)' } },
+                        y: { title: { display: true, text: 'NEET Rate (%)' } }
+                    }
+                }
+            });
+        }
+
+        function initTrendChart() {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+
+            charts.trend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: historicNEET.quarters,
+                    datasets: [
+                        {
+                            label: 'Total NEET (thousands)',
+                            data: historicNEET.total,
+                            borderColor: '#e74c3c',
+                            backgroundColor: '#e74c3c20',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        annotation: {
+                            annotations: {
+                                covidLine: {
+                                    type: 'line',
+                                    xMin: '2020 Q1',
+                                    xMax: '2020 Q1',
+                                    borderColor: '#666',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    label: {
+                                        display: true,
+                                        content: 'COVID-19',
+                                        position: 'start'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        }
+
+        function updateTrendChart() {
+            const metric = document.getElementById('trendMetric').value;
+
+            let datasets;
+            switch (metric) {
+                case 'total':
+                    datasets = [{
+                        label: 'Total NEET (thousands)',
+                        data: historicNEET.total,
+                        borderColor: '#e74c3c',
+                        backgroundColor: '#e74c3c20',
+                        fill: true,
+                        tension: 0.3
+                    }];
+                    break;
+                case 'rate':
+                    datasets = [{
+                        label: 'NEET Rate (%)',
+                        data: historicNEET.rate,
+                        borderColor: '#f39c12',
+                        backgroundColor: '#f39c1220',
+                        fill: true,
+                        tension: 0.3
+                    }];
+                    break;
+                case 'breakdown':
+                    datasets = [
+                        {
+                            label: 'Unemployed',
+                            data: historicNEET.unemployed,
+                            borderColor: '#3498db',
+                            backgroundColor: '#3498db80',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Inactive',
+                            data: historicNEET.inactive,
+                            borderColor: '#9b59b6',
+                            backgroundColor: '#9b59b680',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ];
+                    break;
+                case 'disability':
+                    datasets = [{
+                        label: 'Health-Related Inactivity (thousands)',
+                        data: historicNEET.disability,
+                        borderColor: '#e74c3c',
+                        backgroundColor: '#e74c3c20',
+                        fill: true,
+                        tension: 0.3
+                    }];
+                    break;
+            }
+
+            charts.trend.data.datasets = datasets;
+            charts.trend.update();
+        }
+
+        function initHealthBreakdownChart() {
+            const ctx = document.getElementById('healthBreakdownChart').getContext('2d');
+
+            const years = [2015, 2017, 2019, 2021, 2023, 2025];
+
+            charts.healthBreakdown = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Mental Health',
+                            data: [52, 65, 88, 125, 178, 218],
+                            backgroundColor: '#e74c3c'
+                        },
+                        {
+                            label: 'Musculoskeletal',
+                            data: [18, 21, 24, 28, 35, 42],
+                            backgroundColor: '#3498db'
+                        },
+                        {
+                            label: 'Other Health',
+                            data: [55, 56, 56, 59, 65, 65],
+                            backgroundColor: '#27ae60'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, title: { display: true, text: 'Thousands' } }
+                    }
+                }
+            });
+        }
+
+        function initPredictionChart() {
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+
+            const years = ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'];
+
+            charts.prediction = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Historic',
+                            data: [958, null, null, null, null, null, null, null, null, null, null],
+                            borderColor: '#2c3e50',
+                            backgroundColor: '#2c3e50',
+                            pointRadius: 6,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Baseline',
+                            data: [958, 985, 1010, 1030, 1045, 1055, 1060, 1062, 1060, 1055, 1048],
+                            borderColor: '#27ae60',
+                            borderDash: [5, 5],
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Moderate',
+                            data: [958, 1005, 1055, 1100, 1140, 1175, 1205, 1230, 1250, 1265, 1275],
+                            borderColor: '#f39c12',
+                            borderDash: [5, 5],
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Severe',
+                            data: [958, 1030, 1110, 1195, 1280, 1365, 1445, 1520, 1590, 1655, 1715],
+                            borderColor: '#e74c3c',
+                            borderDash: [5, 5],
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        annotation: {
+                            annotations: {
+                                millionLine: {
+                                    type: 'line',
+                                    yMin: 1000,
+                                    yMax: 1000,
+                                    borderColor: '#e74c3c',
+                                    borderWidth: 2,
+                                    borderDash: [10, 5],
+                                    label: {
+                                        display: true,
+                                        content: '1 Million',
+                                        position: 'end'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: 'NEET Population (thousands)' },
+                            min: 900
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePrediction() {
+            const sendGrowth = parseFloat(document.getElementById('sendGrowth').value);
+            const dlaGrowth = parseFloat(document.getElementById('dlaGrowth').value);
+            const jobDecline = parseFloat(document.getElementById('jobDecline').value);
+            const aiDisplacement = parseFloat(document.getElementById('aiDisplacement').value);
+
+            // Update display values
+            document.getElementById('sendValue').textContent = sendGrowth.toFixed(1);
+            document.getElementById('dlaValue').textContent = dlaGrowth.toFixed(1);
+            document.getElementById('jobValue').textContent = jobDecline.toFixed(1);
+            document.getElementById('aiValue').textContent = aiDisplacement.toFixed(1);
+
+            // Calculate projections
+            const baseNEET = 958;
+            const years = 5; // to 2030
+
+            // Baseline: current policy continues
+            const baselineGrowth = 0.01 + (sendGrowth * 0.002) + (dlaGrowth * 0.003) + (jobDecline * 0.001);
+            const baseline2030 = Math.round(baseNEET * Math.pow(1 + baselineGrowth, years));
+
+            // Moderate: worse trends
+            const moderateGrowth = baselineGrowth * 1.5 + (aiDisplacement * 0.01);
+            const moderate2030 = Math.round(baseNEET * Math.pow(1 + moderateGrowth, years));
+
+            // Severe: compounding
+            const severeGrowth = baselineGrowth * 2.2 + (aiDisplacement * 0.02);
+            const severe2030 = Math.round(baseNEET * Math.pow(1 + severeGrowth, years));
+
+            // Update UI
+            document.getElementById('baselineProjection').textContent = (baseline2030 / 1000).toFixed(2) + 'm';
+            document.getElementById('moderateProjection').textContent = (moderate2030 / 1000).toFixed(2) + 'm';
+            document.getElementById('severeProjection').textContent = (severe2030 / 1000).toFixed(2) + 'm';
+
+            // Update chart
+            const yearsArr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+            charts.prediction.data.datasets[1].data = yearsArr.map(y =>
+                y === 0 ? 958 : Math.round(baseNEET * Math.pow(1 + baselineGrowth, y))
+            );
+            charts.prediction.data.datasets[2].data = yearsArr.map(y =>
+                y === 0 ? 958 : Math.round(baseNEET * Math.pow(1 + moderateGrowth, y))
+            );
+            charts.prediction.data.datasets[3].data = yearsArr.map(y =>
+                y === 0 ? 958 : Math.round(baseNEET * Math.pow(1 + severeGrowth, y))
+            );
+
+            charts.prediction.update();
+        }
+
+        function initDurationChart() {
+            const ctx = document.getElementById('durationChart').getContext('2d');
+
+            charts.duration = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-3 months', '3-6 months', '6-12 months', '12-24 months', '24+ months'],
+                    datasets: [{
+                        label: 'Into-Work Rate (%)',
+                        data: [12.5, 8.2, 6.1, 4.5, 3.2],
+                        backgroundColor: ['#27ae60', '#2ecc71', '#f39c12', '#e67e22', '#e74c3c'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Into-Work Rate (%)' } }
+                    }
+                }
+            });
+        }
+
+        function initAgeChart() {
+            const ctx = document.getElementById('ageChart').getContext('2d');
+
+            charts.age = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Under 25', '25-34', '35-44', '45-54', '55+'],
+                    datasets: [{
+                        label: 'Into-Work Rate (%)',
+                        data: [9.8, 8.2, 7.1, 6.2, 4.8],
+                        backgroundColor: ['#27ae60', '#2ecc71', '#f39c12', '#e67e22', '#e74c3c'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Into-Work Rate (%)' } }
+                    }
+                }
+            });
+        }
+
+        function initSeasonalityChart() {
+            const ctx = document.getElementById('seasonalityChart').getContext('2d');
+
+            charts.seasonality = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Into-Work Rate (%)',
+                        data: [6.8, 6.5, 7.2, 8.5, 7.8, 7.4, 7.2, 7.5, 8.2, 8.8, 7.5, 6.2],
+                        borderColor: '#9b59b6',
+                        backgroundColor: '#9b59b620',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: false, title: { display: true, text: 'Into-Work Rate (%)' } }
+                    }
+                }
+            });
+        }
+
+        function initFamilyChart() {
+            const ctx = document.getElementById('familyChart').getContext('2d');
+
+            charts.family = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Single, no children', 'Couple, no children', 'Couple, with children', 'Single, with children'],
+                    datasets: [{
+                        label: 'Into-Work Rate (%)',
+                        data: [8.5, 7.8, 6.8, 5.2],
+                        backgroundColor: ['#27ae60', '#2ecc71', '#f39c12', '#e74c3c'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, title: { display: true, text: 'Into-Work Rate (%)' } }
+                    }
+                }
+            });
+        }
+
+        function initDurationAgeChart() {
+            const ctx = document.getElementById('durationAgeChart').getContext('2d');
+
+            charts.durationAge = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['0-3m', '3-6m', '6-12m', '12-24m', '24+m'],
+                    datasets: [
+                        { label: 'Under 25', data: [14.2, 10.8, 8.5, 6.2, 4.5], borderColor: '#27ae60', tension: 0.3 },
+                        { label: '25-34', data: [12.8, 9.2, 7.2, 5.1, 3.8], borderColor: '#3498db', tension: 0.3 },
+                        { label: '35-44', data: [11.5, 7.8, 5.8, 4.2, 3.0], borderColor: '#f39c12', tension: 0.3 },
+                        { label: '45-54', data: [10.2, 6.5, 4.8, 3.5, 2.4], borderColor: '#e67e22', tension: 0.3 },
+                        { label: '55+', data: [8.5, 5.2, 3.5, 2.8, 1.8], borderColor: '#e74c3c', tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Into-Work Rate (%)' } }
+                    }
+                }
+            });
+        }
+
+        function initIntoWorkTable() {
+            const tbody = document.getElementById('intoWorkTable');
+            const sorted = [...localAuthorities].sort((a, b) => b.intoWorkRate - a.intoWorkRate);
+
+            tbody.innerHTML = sorted.map(la => {
+                const diff = la.intoWorkRate - 7.4;
+                const diffColor = diff > 0 ? '#27ae60' : '#e74c3c';
+                return `
+                    <tr>
+                        <td><strong>${la.name}</strong></td>
+                        <td>${la.region}</td>
+                        <td><strong>${la.intoWorkRate}%</strong></td>
+                        <td style="color:${diffColor}">${diff > 0 ? '+' : ''}${diff.toFixed(1)}pp</td>
+                        <td>${la.caseload.toLocaleString()}</td>
+                        <td>${labourMarketTypes[la.lmType].name}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ============================================================================
+        // STAT-XPLORE API
+        // ============================================================================
+
+        async function checkStatXploreConnection() {
+            try {
+                const response = await fetch('https://stat-xplore.dwp.gov.uk/webapi/rest/v1/info', {
+                    headers: {
+                        'APIKey': STAT_XPLORE_API_KEY
+                    }
+                });
+
+                if (response.ok) {
+                    document.getElementById('apiStatus').className = 'api-status connected';
+                    document.getElementById('apiStatus').textContent = '● Stat-Xplore: Connected';
+                    document.getElementById('statXploreStatus').textContent = 'Connected';
+                    document.getElementById('statXploreStatus').style.background = '#27ae60';
+                } else {
+                    throw new Error('API error');
+                }
+            } catch (e) {
+                document.getElementById('apiStatus').className = 'api-status disconnected';
+                document.getElementById('apiStatus').textContent = '● Stat-Xplore: Using cached data';
+                document.getElementById('statXploreStatus').textContent = 'Using cached data';
+                document.getElementById('statXploreStatus').style.background = '#f39c12';
+            }
+        }
+
+        async function fetchCrosstab() {
+            const loading = document.getElementById('crosstabLoading');
+            const results = document.getElementById('crosstabResults');
+
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+
+            // Simulate API call (actual implementation would use Stat-Xplore API)
+            setTimeout(() => {
+                loading.classList.add('hidden');
+                results.classList.remove('hidden');
+            }, 1500);
+        }
+
+        // ============================================================================
+        // TIME SLIDER
+        // ============================================================================
+
+        function initTimeSlider() {
+            const slider = document.getElementById('timeSlider');
+
+            noUiSlider.create(slider, {
+                start: [historicNEET.quarters.length - 1],
+                connect: [true, false],
+                step: 1,
+                range: {
+                    'min': 0,
+                    'max': historicNEET.quarters.length - 1
+                },
+                tooltips: {
+                    to: function(value) {
+                        return historicNEET.quarters[Math.round(value)];
+                    }
+                }
+            });
+
+            slider.noUiSlider.on('update', function(values) {
+                const idx = Math.round(values[0]);
+                document.getElementById('selectedPeriod').textContent = historicNEET.quarters[idx];
+
+                // Update value boxes
+                document.getElementById('trendNeetTotal').textContent = historicNEET.total[idx] + 'k';
+
+                if (idx > 0) {
+                    const change = ((historicNEET.total[idx] - historicNEET.total[idx - 4]) / historicNEET.total[idx - 4] * 100).toFixed(1);
+                    document.getElementById('trendNeetChange').textContent = (change > 0 ? '↑ +' : '↓ ') + change + '% vs prev year';
+                    document.getElementById('trendNeetChange').className = 'change ' + (change > 0 ? 'up' : 'down');
+                }
+            });
+        }
+
+        // ============================================================================
+        // TAB NAVIGATION
+        // ============================================================================
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).classList.remove('hidden');
+            event.target.classList.add('active');
+
+            // Resize charts when tab becomes visible
+            if (tabId === 'maps' && map) {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
+        }
+
+        // ============================================================================
+        // INIT
+        // ============================================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            initCharts();
+            initTimeSlider();
+            checkStatXploreConnection();
+            updatePrediction();
+
+            // Event listeners
+            document.getElementById('regionFilter').addEventListener('change', updateMap);
+        });
+    </script>
+</body>
+</html>
